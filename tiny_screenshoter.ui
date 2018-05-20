@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TinyScreenshoter</class>
+ <widget class="QMainWindow" name="TinyScreenshoter">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>104</width>
+    <height>41</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>TinyScreenshoter</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <widget class="QPushButton" name="makeShot">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>83</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Make shot!</string>
+    </property>
+   </widget>
+  </widget>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections/>
+</ui>
