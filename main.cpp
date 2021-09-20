@@ -27,9 +27,16 @@
 
 int main(int argc, char *argv[])
 {
+    Q_INIT_RESOURCE(res);
+
+
     QApplication a(argc, argv);
+    QApplication::setQuitOnLastWindowClosed(false);
+    TinyScreenshoter::initHook();
+
     TinyScreenshoter w;
-    w.show();
+//    w.show();
+    Q_UNUSED(w);
 
     return a.exec();
 }

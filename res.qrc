@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>ts-tray.ico</file>
+        <file>ts-tray.png</file>
+    </qresource>
+</RCC>

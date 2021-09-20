@@ -26,6 +26,8 @@
 #define TINY_SCREENSHOTER_H
 
 #include <QMainWindow>
+#include <QSystemTrayIcon>
+#include <QTimer>
 
 namespace Ui {
 class TinyScreenshoter;
@@ -36,6 +38,7 @@ class TinyScreenshoter : public QMainWindow
     Q_OBJECT
 
 public:
+    static void initHook();
     explicit TinyScreenshoter(QWidget *parent = 0);
     ~TinyScreenshoter();
 
@@ -43,10 +46,39 @@ protected:
     void changeEvent(QEvent *e);
 
 private slots:
-    void on_makeShot_clicked();
+    void makeScreenshot();
+    void on_saveImageClipboard_clicked();
+    void iconActivated(QSystemTrayIcon::ActivationReason reason);
+    void on_setSavePath_clicked();
+#ifdef Q_OS_WIN
+    void keyWatch();
+#endif
 
 private:
+    void init();
+
+    void loadSetup();
+    void saveSetup();
+
+#ifdef _WIN32
+    static LRESULT CALLBACK windowHookLL(int code, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK windowHook(int code, WPARAM wParam, LPARAM lParam);
+    static TinyScreenshoter* m_this;
+    static HHOOK m_msgHook;
+    QTimer m_watch;
+    bool m_prScrPressed = false;
+#endif
+
+    QString m_savePath;
+
     Ui::TinyScreenshoter *ui;
+
+    QAction *restoreAction;
+    QAction *quitAction;
+    QAction *saveImageClipboard;
+
+    QSystemTrayIcon *trayIcon;
+    QMenu *trayIconMenu;
 };
 
 #endif // TINY_SCREENSHOTER_H

@@ -37,3 +37,6 @@ HEADERS += \
 
 FORMS += \
         tiny_screenshoter.ui
+
+RESOURCES += \
+    res.qrc

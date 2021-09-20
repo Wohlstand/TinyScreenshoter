@@ -6,27 +6,44 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>104</width>
-    <height>41</height>
+    <width>249</width>
+    <height>112</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>TinyScreenshoter</string>
+   <string>Settings</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QPushButton" name="makeShot">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>10</y>
-      <width>83</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Make shot!</string>
-    </property>
-   </widget>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="2" column="0">
+     <widget class="QPushButton" name="takeScreenshot">
+      <property name="text">
+       <string>Take screenshot manually</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>Note: To make screenshot, hit PrintScreen key</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QPushButton" name="setSavePath">
+      <property name="text">
+       <string>Set save path...</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QPushButton" name="saveImageClipboard">
+      <property name="text">
+       <string>Save clipboard image content</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
