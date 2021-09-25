@@ -28,6 +28,9 @@
 #include <QMainWindow>
 #include <QSystemTrayIcon>
 #include <QTimer>
+#include <QFile>
+
+class QFtp;
 
 namespace Ui {
 class TinyScreenshoter;
@@ -53,12 +56,16 @@ private slots:
 #ifdef Q_OS_WIN
     void keyWatch();
 #endif
+    void ftpCommandFinished(int id, bool error);
+    void saveSetupSlot();
 
 private:
     void init();
 
     void loadSetup();
     void saveSetup();
+
+    void ftpUpload(QString path, QString fName);
 
 #ifdef _WIN32
     static LRESULT CALLBACK windowHookLL(int code, WPARAM wParam, LPARAM lParam);
@@ -70,6 +77,7 @@ private:
 #endif
 
     QString m_savePath;
+    QFile m_uploadingFile;
 
     Ui::TinyScreenshoter *ui;
 
@@ -79,6 +87,7 @@ private:
 
     QSystemTrayIcon *trayIcon;
     QMenu *trayIconMenu;
+    QFtp *m_ftpHost = nullptr;
 };
 
 #endif // TINY_SCREENSHOTER_H

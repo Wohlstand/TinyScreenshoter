@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>249</width>
-    <height>112</height>
+    <width>270</width>
+    <height>444</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,10 +15,106 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
+    <item row="4" column="0">
+     <widget class="QGroupBox" name="uploadToFtp">
+      <property name="title">
+       <string>Upload to FTP</string>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2" columnstretch="0,1000">
+       <item row="4" column="1">
+        <widget class="QLineEdit" name="ftpDir"/>
+       </item>
+       <item row="5" column="1">
+        <widget class="QCheckBox" name="ftpRemoveOnHost">
+         <property name="text">
+          <string>Remove local copy after upload</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>Password</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Host</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>Port</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>User</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="ftpHost"/>
+       </item>
+       <item row="1" column="1">
+        <widget class="QSpinBox" name="ftpPort">
+         <property name="minimum">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <number>65545</number>
+         </property>
+         <property name="value">
+          <number>22</number>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLineEdit" name="ftpUser"/>
+       </item>
+       <item row="3" column="1">
+        <widget class="QLineEdit" name="ftpPassword">
+         <property name="echoMode">
+          <enum>QLineEdit::Password</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="label_6">
+         <property name="text">
+          <string>Directory</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0" colspan="2">
+        <widget class="QTextBrowser" name="ftpLog"/>
+       </item>
+      </layout>
+     </widget>
+    </item>
     <item row="2" column="0">
      <widget class="QPushButton" name="takeScreenshot">
       <property name="text">
        <string>Take screenshot manually</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QPushButton" name="saveImageClipboard">
+      <property name="text">
+       <string>Save clipboard image content</string>
       </property>
      </widget>
     </item>
@@ -36,17 +132,22 @@
       </property>
      </widget>
     </item>
-    <item row="3" column="0">
-     <widget class="QPushButton" name="saveImageClipboard">
-      <property name="text">
-       <string>Save clipboard image content</string>
-      </property>
-     </widget>
-    </item>
    </layout>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>setSavePath</tabstop>
+  <tabstop>takeScreenshot</tabstop>
+  <tabstop>saveImageClipboard</tabstop>
+  <tabstop>uploadToFtp</tabstop>
+  <tabstop>ftpHost</tabstop>
+  <tabstop>ftpPort</tabstop>
+  <tabstop>ftpUser</tabstop>
+  <tabstop>ftpPassword</tabstop>
+  <tabstop>ftpDir</tabstop>
+  <tabstop>ftpRemoveOnHost</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

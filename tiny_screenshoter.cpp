@@ -33,6 +33,8 @@
 #include <QClipboard>
 #include <QMessageBox>
 #include <QMenu>
+#include <QFtp>
+#include <QtDebug>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -83,6 +85,25 @@ TinyScreenshoter::TinyScreenshoter(QWidget *parent) :
     }
 #endif
 
+    QObject::connect(ui->ftpHost, SIGNAL(editingFinished()),
+                     this, SLOT(saveSetupSlot()));
+    QObject::connect(ui->ftpPort, SIGNAL(editingFinished()),
+                     this, SLOT(saveSetupSlot()));
+    QObject::connect(ui->ftpUser, SIGNAL(editingFinished()),
+                     this, SLOT(saveSetupSlot()));
+    QObject::connect(ui->ftpPassword, SIGNAL(editingFinished()),
+                     this, SLOT(saveSetupSlot()));
+    QObject::connect(ui->ftpDir, SIGNAL(editingFinished()),
+                     this, SLOT(saveSetupSlot()));
+    QObject::connect(ui->ftpRemoveOnHost, SIGNAL(clicked()),
+                     this, SLOT(saveSetupSlot()));
+    QObject::connect(ui->uploadToFtp, SIGNAL(clicked()),
+                     this, SLOT(saveSetupSlot()));
+
+    m_ftpHost = new QFtp(this);
+    QObject::connect(m_ftpHost, SIGNAL(commandFinished(int,bool)),
+                     this, SLOT(ftpCommandFinished(int,bool)));
+
     init();
 }
 
@@ -111,14 +132,23 @@ void TinyScreenshoter::makeScreenshot()
 #endif
 
     QDateTime t = QDateTime::currentDateTime();
-    QString saveWhere = QString("%1/Scr_%2-%3-%4-%5-%6-%7.png")
+    QString fName = QString("Scr_%1-%2-%3-%4-%5-%6.png")
+            .arg(t.date().year(), 4, 10, QChar('0'))
+            .arg(t.date().month(), 2, 10, QChar('0'))
+            .arg(t.date().day(), 2, 10, QChar('0'))
+            .arg(t.time().hour(), 2, 10, QChar('0'))
+            .arg(t.time().minute(), 2, 10, QChar('0'))
+            .arg(t.time().second(), 2, 10, QChar('0'));
+    QString saveWhere = QString("%1/%2")
             .arg(m_savePath)
-            .arg(t.date().year()).arg(t.date().month()).arg(t.date().day())
-            .arg(t.time().hour()).arg(t.time().minute()).arg(t.time().second());
+            .arg(fName);
     okno.save(saveWhere, "PNG");
 #ifdef _WIN32
     MessageBeep(MB_ICONEXCLAMATION);
 #endif
+
+    if(ui->uploadToFtp->isChecked())
+        ftpUpload(saveWhere, fName);
 }
 
 void TinyScreenshoter::on_saveImageClipboard_clicked()
@@ -141,14 +171,23 @@ void TinyScreenshoter::on_saveImageClipboard_clicked()
 #endif
 
     QDateTime t = QDateTime::currentDateTime();
-    QString saveWhere = QString("%1/Scr_%2-%3-%4-%5-%6-%7.png")
+    QString fName = QString("Scr_%1-%2-%3-%4-%5-%6.png")
+            .arg(t.date().year(), 4, 10, QChar('0'))
+            .arg(t.date().month(), 2, 10, QChar('0'))
+            .arg(t.date().day(), 2, 10, QChar('0'))
+            .arg(t.time().hour(), 2, 10, QChar('0'))
+            .arg(t.time().minute(), 2, 10, QChar('0'))
+            .arg(t.time().second(), 2, 10, QChar('0'));
+    QString saveWhere = QString("%1/%2")
             .arg(m_savePath)
-            .arg(t.date().year()).arg(t.date().month()).arg(t.date().day())
-            .arg(t.time().hour()).arg(t.time().minute()).arg(t.time().second());
+            .arg(fName);
     okno.save(saveWhere, "PNG");
 #ifdef _WIN32
     MessageBeep(MB_ICONEXCLAMATION);
 #endif
+
+    if(ui->uploadToFtp->isChecked())
+        ftpUpload(saveWhere, fName);
 }
 
 
@@ -199,6 +238,16 @@ void TinyScreenshoter::loadSetup()
     setup.beginGroup("main");
     m_savePath = setup.value("save-path", qApp->applicationDirPath()).toString();
     setup.endGroup();
+
+    setup.beginGroup("ftp");
+    ui->uploadToFtp->setChecked(setup.value("enable", false).toBool());
+    ui->ftpRemoveOnHost->setChecked(setup.value("remove-files", false).toBool());
+    ui->ftpHost->setText(setup.value("host", QString()).toString());
+    ui->ftpUser->setText(setup.value("user", QString()).toString());
+    ui->ftpPassword->setText(setup.value("password", QString()).toString());
+    ui->ftpPort->setValue(setup.value("port", 21).toInt());
+    ui->ftpDir->setText(setup.value("dir", QString()).toString());
+    setup.endGroup();
 }
 
 void TinyScreenshoter::saveSetup()
@@ -207,6 +256,95 @@ void TinyScreenshoter::saveSetup()
     setup.beginGroup("main");
     setup.setValue("save-path", m_savePath);
     setup.endGroup();
+
+    setup.beginGroup("ftp");
+    setup.setValue("enable", ui->uploadToFtp->isChecked());
+    setup.setValue("remove-files", ui->ftpRemoveOnHost->isChecked());
+    setup.setValue("host", ui->ftpHost->text());
+    setup.setValue("port", ui->ftpPort->value());
+    setup.setValue("user", ui->ftpUser->text());
+    setup.setValue("password", ui->ftpPassword->text());
+    setup.setValue("dir", ui->ftpDir->text());
+    setup.endGroup();
+}
+
+void TinyScreenshoter::ftpUpload(QString path, QString fName)
+{
+    ui->ftpLog->clear();
+    m_ftpHost->connectToHost(ui->ftpHost->text(), (quint16)ui->ftpPort->value());
+    m_ftpHost->login(ui->ftpUser->text(), ui->ftpPassword->text());
+
+    if(!ui->ftpDir->text().isEmpty())
+        m_ftpHost->cd(ui->ftpDir->text());
+    else
+        m_ftpHost->cd(".");
+
+    m_uploadingFile.setFileName(path);
+    m_uploadingFile.open(QIODevice::ReadOnly);
+    m_ftpHost->put(&m_uploadingFile, fName);
+    m_ftpHost->close();
+}
+
+void TinyScreenshoter::ftpCommandFinished(int id, bool error)
+{
+    switch(m_ftpHost->currentCommand())
+    {
+    case QFtp::ConnectToHost:// connect
+        if(error)
+        {
+            ui->ftpLog->append(QString("Can't connect FTP: %1\n").arg(m_ftpHost->errorString()));
+            m_ftpHost->close();
+            break;
+        }
+        ui->ftpLog->append("-- Connected");
+        break;
+
+    case QFtp::Login:// login
+        if(error)
+        {
+            ui->ftpLog->append(QString("FTP login failed: %1").arg(m_ftpHost->errorString()));
+            m_ftpHost->close();
+            break;
+        }
+        ui->ftpLog->append("-- Logged in");
+        break;
+
+    case QFtp::Cd:// cd
+        if(error)
+        {
+            ui->ftpLog->append(QString("FTP cd failed: %1").arg(m_ftpHost->errorString()));
+            m_ftpHost->close();
+            break;
+        }
+        ui->ftpLog->append("-- cd done");
+        break;
+
+    case QFtp::Put://put
+        if(error)
+        {
+            ui->ftpLog->append(QString("FTP put failed: %1").arg(m_ftpHost->errorString()));
+            m_ftpHost->close();
+            break;
+        }
+        ui->ftpLog->append("-- Put completed");
+        break;
+
+    case QFtp::Close://close
+        m_uploadingFile.close();
+        if(ui->ftpRemoveOnHost->isChecked())
+            m_uploadingFile.remove();
+        m_uploadingFile.setFileName(QString());
+        ui->ftpLog->append("-- Closed");
+        break;
+
+    default:
+        break;
+    }
+}
+
+void TinyScreenshoter::saveSetupSlot()
+{
+    saveSetup();
 }
 
 #ifdef _WIN32
