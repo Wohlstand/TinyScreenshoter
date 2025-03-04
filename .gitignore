@@ -1,6 +1,6 @@
 bin/
 build-*
-*.user
+*.user*
 *.o
 *.a
 *.so
