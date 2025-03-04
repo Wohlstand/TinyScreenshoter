@@ -29,6 +29,7 @@
 #include <QSystemTrayIcon>
 #include <QTimer>
 #include <QFile>
+#include <QVector>
 
 class QFtp;
 
@@ -74,6 +75,20 @@ private:
     static HHOOK m_msgHook;
     QTimer m_watch;
     bool m_prScrPressed = false;
+
+    QVector<uint8_t> m_pixels;
+    LONG    m_screenW = 0;
+    LONG    m_screenH = 0;
+    HWND    m_screenWinId = nullptr;
+    HDC     m_screenDC = nullptr;
+
+    HDC     m_screen_dc = nullptr;
+    HDC     m_screen_bitmap_dc = nullptr;
+    HBITMAP m_screen_bitmap = nullptr;
+    HGDIOBJ m_screen_null_bitmap = nullptr;
+
+    void winScreenClear();
+    void updatePixels();
 #endif
 
     QString m_savePath;

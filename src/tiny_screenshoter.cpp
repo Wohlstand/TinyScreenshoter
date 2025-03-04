@@ -47,6 +47,10 @@ TinyScreenshoter* TinyScreenshoter::m_this = nullptr;
 HHOOK TinyScreenshoter::m_msgHook = nullptr;
 #endif
 
+#define STB_IMAGE_WRITE_STATIC
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 void TinyScreenshoter::initHook()
 {
 #ifdef _WIN32
@@ -75,6 +79,8 @@ TinyScreenshoter::TinyScreenshoter(QWidget *parent) :
 
 #ifdef _WIN32
     m_this = this;
+
+    updatePixels();
 
     // on Windows 98 run the watch timer that will watch for the PrintScreen key state actively
     if(QSysInfo::windowsVersion() < QSysInfo::WV_DOS_based)
@@ -109,6 +115,9 @@ TinyScreenshoter::TinyScreenshoter(QWidget *parent) :
 
 TinyScreenshoter::~TinyScreenshoter()
 {
+#ifdef _WIN32
+    winScreenClear();
+#endif
     delete ui;
 }
 
@@ -126,9 +135,44 @@ void TinyScreenshoter::changeEvent(QEvent *e)
 
 void TinyScreenshoter::makeScreenshot()
 {
-    QPixmap okno = QPixmap::grabWindow(QApplication::desktop()->winId());
+    setCursor(Qt::WaitCursor);
+
 #ifdef _WIN32
+    updatePixels();
+    BitBlt(m_screen_bitmap_dc, 0, 0, m_screenW, m_screenH, m_screen_dc, 0, 0, SRCCOPY);
+
+    BITMAPINFO bi;
+    memset(&bi, 0, sizeof(BITMAPINFO));
+    bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bi.bmiHeader.biWidth = m_screenW;
+    bi.bmiHeader.biHeight = -m_screenH;
+    bi.bmiHeader.biPlanes = 1;
+    bi.bmiHeader.biBitCount = 32;
+    bi.bmiHeader.biCompression = BI_RGB;
+    bi.bmiHeader.biSizeImage = m_screenW * m_screenH * 4;
+
+    if(GetDIBits(m_screenDC, m_screen_bitmap, 0, m_screenH, m_pixels.data(), &bi, DIB_RGB_COLORS) == 0)
+    {
+        setCursor(Qt::ArrowCursor);
+        QMessageBox::critical(nullptr, "Whoops", "Failed to take the screenshot using GetDIBits.");
+        return;
+    }
+
+    uint8_t *pix8 = m_pixels.data();
+    uint8_t tmp;
+
+    for(LONG i = 0; i < m_screenW * m_screenH; ++i)
+    {
+        tmp = pix8[0];
+        pix8[0] = pix8[2];
+        pix8[2] = tmp;
+        pix8[3] = 0xFF;
+        pix8 += 4;
+    }
+
     MessageBeep(MB_OK);
+#else
+    QPixmap okno = QPixmap::grabWindow(QApplication::desktop()->winId());
 #endif
 
     QDateTime t = QDateTime::currentDateTime();
@@ -142,13 +186,29 @@ void TinyScreenshoter::makeScreenshot()
     QString saveWhere = QString("%1/%2")
             .arg(m_savePath)
             .arg(fName);
-    okno.save(saveWhere, "PNG");
+
 #ifdef _WIN32
+    int raw_len;
+    uint8_t *raw = stbi_write_png_to_mem(m_pixels.data(), m_screenW * 4, m_screenW, m_screenH, 4, &raw_len);
+
+    if(raw)
+    {
+        QFile q(saveWhere);
+        q.open(QIODevice::WriteOnly);
+        q.write(reinterpret_cast<char*>(raw), raw_len);
+        q.close();
+        free(raw);
+    }
+
     MessageBeep(MB_ICONEXCLAMATION);
+#else
+    okno.save(saveWhere, "PNG");
 #endif
 
     if(ui->uploadToFtp->isChecked())
         ftpUpload(saveWhere, fName);
+
+    setCursor(Qt::ArrowCursor);
 }
 
 void TinyScreenshoter::on_saveImageClipboard_clicked()
@@ -156,14 +216,17 @@ void TinyScreenshoter::on_saveImageClipboard_clicked()
     if(!qApp->clipboard())
         return;
 
+    setCursor(Qt::WaitCursor);
+
     QImage okno = qApp->clipboard()->image();
 
     if(okno.isNull())
     {
+        setCursor(Qt::ArrowCursor);
 #ifdef _WIN32
         MessageBeep(MB_ICONERROR);
 #endif
-    return;
+        return;
     }
 
 #ifdef _WIN32
@@ -181,13 +244,17 @@ void TinyScreenshoter::on_saveImageClipboard_clicked()
     QString saveWhere = QString("%1/%2")
             .arg(m_savePath)
             .arg(fName);
+
     okno.save(saveWhere, "PNG");
+
 #ifdef _WIN32
     MessageBeep(MB_ICONEXCLAMATION);
 #endif
 
     if(ui->uploadToFtp->isChecked())
         ftpUpload(saveWhere, fName);
+
+    setCursor(Qt::ArrowCursor);
 }
 
 
@@ -378,6 +445,73 @@ LRESULT TinyScreenshoter::windowHook(int code, WPARAM wParam, LPARAM lParam)
 
     return CallNextHookEx(0, code, wParam, lParam);
 }
+
+#ifdef _WIN32
+void TinyScreenshoter::winScreenClear()
+{
+    if(m_screen_dc)
+    {
+        ReleaseDC(m_screenWinId, m_screen_dc);
+        m_screen_dc = nullptr;
+    }
+
+    if(m_screen_null_bitmap && m_screen_bitmap_dc)
+    {
+        SelectObject(m_screen_bitmap_dc, m_screen_null_bitmap);
+        m_screen_null_bitmap = nullptr;
+    }
+
+    if(m_screen_bitmap_dc)
+    {
+        DeleteDC(m_screen_bitmap_dc);
+        m_screen_bitmap_dc = nullptr;
+    }
+
+    if(m_screen_bitmap)
+    {
+        DeleteObject(m_screen_bitmap);
+        m_screen_bitmap = nullptr;
+    }
+
+    m_screenWinId = nullptr;
+
+    if(m_screenDC)
+    {
+        ReleaseDC(nullptr, m_screenDC);
+        m_screenDC = nullptr;
+    }
+}
+
+void TinyScreenshoter::updatePixels()
+{
+    RECT r;
+    WId winId = QApplication::desktop()->winId();
+    GetClientRect(winId, &r);
+
+    LONG w = r.right - r.left;
+    LONG h = r.bottom - r.top;
+
+    int newSize = (w * h * 4) + w;
+
+    if(m_pixels.size() != newSize)
+    {
+        winScreenClear();
+
+        m_pixels.resize(newSize);
+        m_screenW = w;
+        m_screenH = h;
+
+        m_screenWinId = winId;
+
+        m_screenDC = GetDC(0);
+
+        m_screen_bitmap_dc = CreateCompatibleDC(m_screenDC);
+        m_screen_bitmap = CreateCompatibleBitmap(m_screenDC, w, h);
+        m_screen_null_bitmap = SelectObject(m_screen_bitmap_dc, m_screen_bitmap);
+        m_screen_dc = GetDC(m_screenWinId);
+    }
+}
+#endif
 
 void TinyScreenshoter::keyWatch()
 {

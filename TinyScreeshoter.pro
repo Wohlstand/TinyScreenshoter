@@ -29,12 +29,15 @@ RC_FILE = res/res.rc
 
 LIBS += -static-libgcc -static-libstdc++ -static -pthread
 
+INCLUDEPATH += src/ lib/
+
 SOURCES += \
         src/main.cpp \
         src/tiny_screenshoter.cpp
 
 HEADERS += \
-        src/tiny_screenshoter.h
+        src/tiny_screenshoter.h \
+        lib/stb_image_write.h
 
 FORMS += \
         src/tiny_screenshoter.ui
