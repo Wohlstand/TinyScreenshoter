@@ -29,14 +29,14 @@ CONFIG += static
 LIBS += -static-libgcc -static-libstdc++ -static -pthread
 
 SOURCES += \
-        main.cpp \
-        tiny_screenshoter.cpp
+        src/main.cpp \
+        src/tiny_screenshoter.cpp
 
 HEADERS += \
-        tiny_screenshoter.h
+        src/tiny_screenshoter.h
 
 FORMS += \
-        tiny_screenshoter.ui
+        src/tiny_screenshoter.ui
 
 RESOURCES += \
-    res.qrc
+    res/res.qrc
