@@ -104,14 +104,16 @@ jobs:
       if: success()
       shell: bash
       run: |
-        7z a -tzip bin/TinyScreenshoter-win32-qt.zip bin/TinyScreenshoter.exe
+        cd bin
+        7z a -tzip TinyScreenshoter-win32-qt.zip TinyScreenshoter.exe
+        cd ..
 
     - name: Upload artifact
       if: success()
       uses: actions/upload-artifact@v4
       continue-on-error: true
       with:
-        path: bin/TinyScreenshoter-*.zip
+        path: bin/*.exe
         name: ${{ matrix.config.name }} ${{ matrix.config.build_type }}
 
     - name: Deploy to builds.wohlsoft.ru
