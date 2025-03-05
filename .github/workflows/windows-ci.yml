@@ -103,10 +103,6 @@ jobs:
     - name: Create Package
       if: success()
       shell: bash
-      # ======================================= Adventures of Demo =======================================
-      # The side game about Demo and siblings from the A2XT universe by raocow and his fan community.
-      # ======================================= Super Mario Bros. X - a fan-game =======================================
-      # Was made in 2009 by Andrew Spinks "Redigit", and supported up to 2011 by it's original author.
       run: |
         7z a -tzip bin/TinyScreenshoter-win32-qt.zip bin/TinyScreenshoter.exe
 
