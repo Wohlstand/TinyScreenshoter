@@ -12,6 +12,7 @@ add_executable(TinyScreenshoterWin WIN32
     src/shot_proc.c src/shot_proc.h
     src/tray_icon.c src/tray_icon.h
     src/shot_hooks.c src/shot_hooks.h
+    src/settings.c src/settings.h
     res/tinyscreen.rc
 )
 
