@@ -8,6 +8,10 @@ endif()
 
 add_executable(TinyScreenshoterWin WIN32
     src/main.c
+    src/shot_data.c src/shot_data.h
+    src/shot_proc.c src/shot_proc.h
+    src/tray_icon.c src/tray_icon.h
+    src/shot_hooks.c src/shot_hooks.h
     res/tinyscreen.rc
 )
 

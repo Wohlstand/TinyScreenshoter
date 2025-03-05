@@ -22,54 +22,12 @@
  * SOFTWARE.
  */
 
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <windows.h>
-#include <shlwapi.h>
-#include "resource.h"
+#ifndef SHOT_HOOKS_H
+#define SHOT_HOOKS_H
 
-#include "shot_proc.h"
-#include "shot_data.h"
-#include "shot_hooks.h"
-#include "tray_icon.h"
+#include <windef.h>
 
+void initKeyHook(HWND hWnd, HINSTANCE hInstance);
+void closeKeyHooks(HWND hWnd);
 
-void runMsgLoop()
-{
-    MSG msg = {0};    //структура сообщения
-    int iGetOk = 0;   //переменная состояния
-
-    while((iGetOk = GetMessage(&msg, NULL, 0, 0 )) != 0) //цикл сообщений
-    {
-        if(iGetOk == -1)
-            return;
-
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-}
-
-
-int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
-{
-    int ret = 0;
-
-    ShotData_init(&g_shotData);
-
-    ret = initSysTrayIcon(hInstance);
-    if(ret != 0)
-        return ret;
-
-    ShotData_update(&g_shotData);
-
-    initKeyHook(g_trayIconHWnd, hInstance);
-
-    runMsgLoop();
-
-    closeSysTrayIcon();
-
-    ShotData_free(&g_shotData);
-
-    return 0;
-}
+#endif /* SHOT_HOOKS_H */

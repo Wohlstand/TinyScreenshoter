@@ -22,54 +22,40 @@
  * SOFTWARE.
  */
 
-#include <stddef.h>
+#ifndef TRAY_ICON_H
+#define TRAY_ICON_H
+
 #include <stdint.h>
-#include <stdio.h>
-#include <windows.h>
+#include <windef.h>
 #include <shlwapi.h>
-#include "resource.h"
 
-#include "shot_proc.h"
-#include "shot_data.h"
-#include "shot_hooks.h"
-#include "tray_icon.h"
-
-
-void runMsgLoop()
+struct TrayIcon
 {
-    MSG msg = {0};    //структура сообщения
-    int iGetOk = 0;   //переменная состояния
+    NOTIFYICONDATAA tnd;
 
-    while((iGetOk = GetMessage(&msg, NULL, 0, 0 )) != 0) //цикл сообщений
-    {
-        if(iGetOk == -1)
-            return;
+    uint32_t notifyIconSizeW;
+    uint32_t notifyIconSizeA;
 
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-}
+    int currentShellVersion;
+    int maxTipLength;
+    HICON hIcon32;
+    HICON hIcon16;
+};
+
+typedef struct TrayIcon TrayIcon;
 
 
-int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
-{
-    int ret = 0;
+#define MYWM_NOTIFYICON (WM_APP + 101)
 
-    ShotData_init(&g_shotData);
 
-    ret = initSysTrayIcon(hInstance);
-    if(ret != 0)
-        return ret;
+extern HWND g_trayIconHWnd;
+extern TrayIcon g_trayIcon;
 
-    ShotData_update(&g_shotData);
 
-    initKeyHook(g_trayIconHWnd, hInstance);
+void initLibraries();
+int detectShellVersion();
 
-    runMsgLoop();
+int initSysTrayIcon(HINSTANCE hInstance);
+void closeSysTrayIcon();
 
-    closeSysTrayIcon();
-
-    ShotData_free(&g_shotData);
-
-    return 0;
-}
+#endif /* TRAY_ICON_H */

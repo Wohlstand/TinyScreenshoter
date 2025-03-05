@@ -22,54 +22,39 @@
  * SOFTWARE.
  */
 
+#ifndef SHOT_DATA_H
+#define SHOT_DATA_H
+
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <windows.h>
-#include <shlwapi.h>
-#include "resource.h"
+#include <windef.h>
 
-#include "shot_proc.h"
-#include "shot_data.h"
-#include "shot_hooks.h"
-#include "tray_icon.h"
-
-
-void runMsgLoop()
+struct ShotData
 {
-    MSG msg = {0};    //структура сообщения
-    int iGetOk = 0;   //переменная состояния
+    int     m_isInit;
+    uint8_t *m_pixels;
+    size_t  m_pixels_size;
 
-    while((iGetOk = GetMessage(&msg, NULL, 0, 0 )) != 0) //цикл сообщений
-    {
-        if(iGetOk == -1)
-            return;
+    LONG    m_screenW;
+    LONG    m_screenH;
+    HWND    m_screenWinId;
+    HDC     m_screenDC;
 
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-}
+    HDC     m_screen_dc;
+    HDC     m_screen_bitmap_dc;
+    HBITMAP m_screen_bitmap;
+    HGDIOBJ m_screen_null_bitmap;
+};
+
+typedef struct ShotData ShotData;
+
+extern ShotData g_shotData;
 
 
-int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
-{
-    int ret = 0;
+void ShotData_init(ShotData *data);
+void ShotData_free(ShotData *data);
 
-    ShotData_init(&g_shotData);
+void ShotData_clear(ShotData *data);
+void ShotData_update(ShotData *data);
 
-    ret = initSysTrayIcon(hInstance);
-    if(ret != 0)
-        return ret;
-
-    ShotData_update(&g_shotData);
-
-    initKeyHook(g_trayIconHWnd, hInstance);
-
-    runMsgLoop();
-
-    closeSysTrayIcon();
-
-    ShotData_free(&g_shotData);
-
-    return 0;
-}
+#endif /* SHOT_DATA_H */

@@ -22,54 +22,15 @@
  * SOFTWARE.
  */
 
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <windows.h>
-#include <shlwapi.h>
-#include "resource.h"
+#ifndef SHOT_PROC_H
+#define SHOT_PROC_H
 
-#include "shot_proc.h"
-#include "shot_data.h"
-#include "shot_hooks.h"
-#include "tray_icon.h"
+#include <windef.h>
 
+typedef struct ShotData ShotData;
 
-void runMsgLoop()
-{
-    MSG msg = {0};    //структура сообщения
-    int iGetOk = 0;   //переменная состояния
+void closePngSaverThread();
 
-    while((iGetOk = GetMessage(&msg, NULL, 0, 0 )) != 0) //цикл сообщений
-    {
-        if(iGetOk == -1)
-            return;
+void cmd_makeScreenshot(HWND hWnd, ShotData *data);
 
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-}
-
-
-int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
-{
-    int ret = 0;
-
-    ShotData_init(&g_shotData);
-
-    ret = initSysTrayIcon(hInstance);
-    if(ret != 0)
-        return ret;
-
-    ShotData_update(&g_shotData);
-
-    initKeyHook(g_trayIconHWnd, hInstance);
-
-    runMsgLoop();
-
-    closeSysTrayIcon();
-
-    ShotData_free(&g_shotData);
-
-    return 0;
-}
+#endif /* SHOT_PROC_H */
