@@ -124,8 +124,8 @@ jobs:
       if: success()
       shell: bash
       run: |
-        7z a -tzip -r bin/TinyScreenshoter-win32-qt.zip bin/TinyScreenshoter.exe
-        7z a -tzip -r bin/TinyScreenshoter-win32-winapi.zip winapi/build/TinyScreenshoterWin.exe
+        7z a -tzip bin/TinyScreenshoter-win32-qt.zip ./bin/TinyScreenshoter.exe
+        7z a -tzip bin/TinyScreenshoter-win32-winapi.zip ./winapi/build/TinyScreenshoterWin.exe
 
     - name: Upload artifact
       if: success()
