@@ -47,6 +47,7 @@ typedef struct
 } SaveData;
 
 static HANDLE s_saverThread = NULL;
+static DWORD s_saverThreadId = 0;
 
 DWORD WINAPI png_saver_thread(LPVOID lpParameter)
 {
@@ -141,7 +142,7 @@ void cmd_makeScreenshot(HWND hWnd, ShotData *data)
         saver->pix_len = data->m_pixels_size;
         memcpy(saver->pix_data,  data->m_pixels,  data->m_pixels_size);
 
-        s_saverThread = CreateThread(NULL, 0, png_saver_thread, saver, 0, NULL);
+        s_saverThread = CreateThread(NULL, 0, &png_saver_thread, (PVOID)saver, 0, &s_saverThreadId);
 
         if(!s_saverThread)
         {
