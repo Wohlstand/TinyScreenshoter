@@ -83,7 +83,7 @@ jobs:
       run: |
         7z x lftp.7z bin etc -o"${{ matrix.config.lftp_install_dir }}"
 
-    - name: Configure
+    - name: Configure (Qt)
       shell: bash
       run: |
         if [[ ! -z "${{ matrix.config.extra_path }}" ]]; then
@@ -92,21 +92,40 @@ jobs:
         fi
         /c/Qt/4.4.3/bin/qmake CONFIG+=Release CONFIG-=Debug
 
-    - name: Build
+    - name: Build (Qt)
       shell: bash
       run: |
         if [[ ! -z "${{ matrix.config.extra_path }}" ]]; then
           export PATH=${{ matrix.config.extra_path }}:${PATH}
         fi
         mingw32-make -j 4
+        
+    - name: Configure (WinAPI)
+      shell: bash
+      run: |
+        if [[ ! -z "${{ matrix.config.extra_path }}" ]]; then
+          export PATH=${{ matrix.config.extra_path }}:${PATH}
+          echo "PATH environment: ${PATH}"
+        fi
+        cd winapi
+        cmake -G "MinGW Makefiles" -b build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=`pwd`/cmake/ci_windows_mingw_toolchain_x32.cmake .
+
+    - name: Build (WinAPI)
+      shell: bash
+      run: |
+        if [[ ! -z "${{ matrix.config.extra_path }}" ]]; then
+          export PATH=${{ matrix.config.extra_path }}:${PATH}
+          echo "PATH environment: ${PATH}"
+        fi
+        cd winapi/build
+        mingw32-make -j 4
 
     - name: Create Package
       if: success()
       shell: bash
       run: |
-        cd bin
-        7z a -tzip TinyScreenshoter-win32-qt.zip TinyScreenshoter.exe
-        cd ..
+        7z a -tzip -r bin/TinyScreenshoter-win32-qt.zip bin/TinyScreenshoter.exe
+        7z a -tzip -r bin/TinyScreenshoter-win32-winapi.zip winapi/build/TinyScreenshoterWin.exe
 
     - name: Upload artifact
       if: success()
