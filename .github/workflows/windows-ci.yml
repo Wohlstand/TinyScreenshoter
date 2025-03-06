@@ -108,7 +108,7 @@ jobs:
           echo "PATH environment: ${PATH}"
         fi
         cd winapi
-        cmake -G "MinGW Makefiles" -b build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=`pwd`/cmake/ci_windows_mingw_toolchain_x32.cmake .
+        cmake -G "MinGW Makefiles" -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=`pwd`/cmake/ci_windows_mingw_toolchain_x32.cmake .
 
     - name: Build (WinAPI)
       shell: bash
