@@ -27,7 +27,10 @@
 #include "tray_icon.h"
 #include "shot_data.h"
 #include "shot_proc.h"
+#include "settings.h"
 #include "resource.h"
+#include "resource_ex.h"
+
 
 static HINSTANCE                lib_sh32 = NULL;
 typedef BOOL (WINAPI *PtrShell_NotifyIcon)(DWORD,PNOTIFYICONDATA);
@@ -83,7 +86,7 @@ int detectShellVersion()
 
 
 
-void ShowPopupMenu(HWND hWnd)
+static void ShowPopupMenu(HWND hWnd)
 {
     HMENU menu = CreatePopupMenu();
     POINT pt;
@@ -103,18 +106,19 @@ void ShowPopupMenu(HWND hWnd)
     }
 }
 
-BOOL OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
+static BOOL OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     BOOL ret = TRUE;
-    // int wNotifyCode = HIWORD(wParam);   // Notification code.
-    int wID         = LOWORD(wParam);   // Item, control, or accelerator identifier.
-    // HWND hwndCtl    = (HWND)lParam;     // Handle of control.
+    /* int wNotifyCode = HIWORD(wParam);   // Notification code. */
+    int wID = LOWORD(wParam);   // Item, control, or accelerator identifier.
+    /* HWND hwndCtl    = (HWND)lParam;     // Handle of control. */
+
+    (VOID)lParam;
 
     switch(wID)
     {
     case IDM_SETTINGS:
-        ShowWindow(hWnd, 1);
-        MessageBoxA(hWnd,"Ikon hat Kliken!", "Aktion", MB_OK|MB_ICONASTERISK);
+        settingsOpen();
         break;
 
     case IDM_SAVECLIP:
@@ -140,25 +144,19 @@ BOOL OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
     return ret;
 }
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
-    case WM_LBUTTONUP:
-        MessageBoxA(hWnd,"Kliken!", "Aktion", MB_OK|MB_ICONASTERISK);
-        break;
-
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
 
     case MYWM_NOTIFYICON:
-    {
         switch(lParam)
         {
         case WM_LBUTTONDBLCLK:
-            ShowWindow(hWnd, 1);
-            MessageBoxA(hWnd,"Ikon hat Kliken!", "Aktion", MB_OK|MB_ICONASTERISK);
+            settingsOpen();
             break;
         case WM_RBUTTONDOWN:
             ShowPopupMenu(hWnd);
@@ -166,7 +164,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
 
         break;
-    }
+
     case WM_COMMAND:
         return OnCommand(hWnd, wParam, lParam);
 

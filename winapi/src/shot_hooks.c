@@ -27,6 +27,7 @@
 #include "shot_hooks.h"
 #include "tray_icon.h"
 #include "resource.h"
+#include "resource_ex.h"
 
 
 static HHOOK    s_msgHook = NULL;

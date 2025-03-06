@@ -6,6 +6,8 @@ if(NOT WIN32)
     message(FATAL_ERROR "This project is targeted to Windows, especially Windows 9x")
 endif()
 
+set(CMAKE_C_STANDARD 90)
+
 add_executable(TinyScreenshoterWin WIN32
     src/main.c
     src/shot_data.c src/shot_data.h
@@ -13,9 +15,11 @@ add_executable(TinyScreenshoterWin WIN32
     src/tray_icon.c src/tray_icon.h
     src/shot_hooks.c src/shot_hooks.h
     src/settings.c src/settings.h
+    src/misc.c src/misc.h
     res/tinyscreen.rc
+    res/resource.h res/resource_ex.h
 )
 
 target_include_directories(TinyScreenshoterWin PRIVATE src res ../lib)
-target_link_libraries(TinyScreenshoterWin PRIVATE gdi32 user32)
+target_link_libraries(TinyScreenshoterWin PRIVATE comctl32 gdi32 user32)
 target_link_options(TinyScreenshoterWin PRIVATE -static -static-libgcc)

@@ -33,6 +33,7 @@
 #include "shot_data.h"
 #include "shot_hooks.h"
 #include "tray_icon.h"
+#include "settings.h"
 
 
 void runMsgLoop()
@@ -55,6 +56,11 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 {
     int ret = 0;
 
+    (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
+
+    InitCommonControls();
+
+    settingsInit(hInstance);
     ShotData_init(&g_shotData);
 
     ret = initSysTrayIcon(hInstance);
@@ -67,6 +73,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
     runMsgLoop();
 
+    settingsDestroy();
     closeSysTrayIcon();
 
     ShotData_free(&g_shotData);

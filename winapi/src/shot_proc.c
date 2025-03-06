@@ -28,6 +28,8 @@
 
 #include "shot_proc.h"
 #include "shot_data.h"
+#include "settings.h"
+#include "misc.h"
 
 #define STB_IMAGE_WRITE_STATIC
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -52,8 +54,8 @@ DWORD WINAPI png_saver_thread(LPVOID lpParameter)
     FILE *f;
     int raw_len;
     uint8_t *raw = stbi_write_png_to_mem(saver->pix_data, saver->pitch, saver->w, saver->h, 4, &raw_len);
+    /* stbi_write_bmp("test.bmp", data->m_screenW, data->m_screenH, 4, data->m_pixels); */
 
-    //    stbi_write_bmp("test.bmp", data->m_screenW, data->m_screenH, 4, data->m_pixels);
     if(raw)
     {
         f = fopen(saver->save_path, "wb");
@@ -104,7 +106,7 @@ void cmd_makeScreenshot(HWND hWnd, ShotData *data)
 
     if(GetDIBits(data->m_screenDC, data->m_screen_bitmap, 0, data->m_screenH, data->m_pixels, &bi, DIB_RGB_COLORS) == 0)
     {
-        MessageBoxA(hWnd,"Failed to take the screenshot using GetDIBits.", "Whoops", MB_OK|MB_ICONERROR);
+        errorMessageBox(hWnd, "Failed to take the screenshot using GetDIBits: %s", "Whoops");
         return;
     }
 
@@ -131,7 +133,8 @@ void cmd_makeScreenshot(HWND hWnd, ShotData *data)
         saver->w = data->m_screenW;
         saver->h = data->m_screenH;
         saver->pitch = data->m_screenW * 4;
-        snprintf(saver->save_path, MAX_PATH, "Scr_%04u-%02u-%02u_%02u-%02u-%02u.png",
+        snprintf(saver->save_path, MAX_PATH, "%s\\Scr_%04u-%02u-%02u_%02u-%02u-%02u.png",
+                 g_settings.savePath,
                  ltime.wYear, ltime.wMonth, ltime.wDay,
                  ltime.wHour, ltime.wMinute, ltime.wSecond);
         saver->pix_data = malloc(data->m_pixels_size);
@@ -142,7 +145,7 @@ void cmd_makeScreenshot(HWND hWnd, ShotData *data)
 
         if(!s_saverThread)
         {
-            MessageBoxA(hWnd,"Failed to make thread... running without", "Whoops", MB_OK|MB_ICONERROR);
+            errorMessageBox(hWnd, "Failed to make thread: %s.\n\nTrying without.", "Whoops");
             png_saver_thread(saver);
         }
     }

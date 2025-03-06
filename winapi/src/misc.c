@@ -22,35 +22,33 @@
  * SOFTWARE.
  */
 
-#ifndef SETTINGS_H
-#define SETTINGS_H
+#include <stdio.h>
+#include <windows.h>
+#include "misc.h"
 
-#include <stdint.h>
-#include <windef.h>
 
-struct TinyShotSettings
+void errorMessageBox(HWND hWnd, const char *errorFormat, const char *msgBoxTitle)
 {
-    char savePath[MAX_PATH];
+    char outBuffer[1024];
+    char errBuffer[1024];
+    DWORD errId = GetLastError();
+    LPSTR messageBuffer = NULL;
+    size_t msgSize;
 
-    BOOL        ftpEnable;
-    BOOL        ftpRemoveUploaded;
-    char        ftpHost[120];
-    uint16_t    ftpPort;
-    char        ftpUser[120];
-    char        ftpPassword[120];
-    char        ftpSavePath[MAX_PATH];
-};
+    ZeroMemory(outBuffer, sizeof(outBuffer));
+    ZeroMemory(errBuffer, sizeof(errBuffer));
 
-typedef struct TinyShotSettings TinyShotSettings;
+    if(errId > 0)
+    {
+        msgSize = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                                NULL, errId, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+        memcpy(errBuffer, messageBuffer, min(msgSize, 1023));
+        LocalFree(messageBuffer);
+    }
+    else
+        snprintf(errBuffer, 1024, "<Unknown error>");
 
-extern TinyShotSettings g_settings;
+    snprintf(outBuffer, 1024, errorFormat, errBuffer);
 
-void settingsInit(HINSTANCE inst);
-
-void settingsLoad();
-void settingsSave();
-
-void settingsOpen();
-void settingsDestroy();
-
-#endif /* SETTINGS_H */
+    MessageBoxA(hWnd, outBuffer, msgBoxTitle, MB_OK|MB_ICONERROR);
+}

@@ -21,36 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#ifndef MISC_H
+#define MISC_H
 
-#ifndef SETTINGS_H
-#define SETTINGS_H
-
-#include <stdint.h>
 #include <windef.h>
 
-struct TinyShotSettings
-{
-    char savePath[MAX_PATH];
+void errorMessageBox(HWND hWnd, const char *errorFormat, const char *msgBoxTitle);
 
-    BOOL        ftpEnable;
-    BOOL        ftpRemoveUploaded;
-    char        ftpHost[120];
-    uint16_t    ftpPort;
-    char        ftpUser[120];
-    char        ftpPassword[120];
-    char        ftpSavePath[MAX_PATH];
-};
-
-typedef struct TinyShotSettings TinyShotSettings;
-
-extern TinyShotSettings g_settings;
-
-void settingsInit(HINSTANCE inst);
-
-void settingsLoad();
-void settingsSave();
-
-void settingsOpen();
-void settingsDestroy();
-
-#endif /* SETTINGS_H */
+#endif // MISC_H
