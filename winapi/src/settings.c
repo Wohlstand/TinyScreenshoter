@@ -27,6 +27,7 @@
 #include <shlobj.h>
 #include "shot_data.h"
 #include "shot_proc.h"
+#include "tray_icon.h"
 #include "misc.h"
 #include "resource.h"
 #include "settings.h"
@@ -147,6 +148,8 @@ static BOOL CALLBACK SettingsDialogueProc(HWND hDlg, UINT iMsg, WPARAM wParam, L
     switch(iMsg)
     {
     case WM_INITDIALOG:
+        SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)g_trayIcon.hIcon32);
+        SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)g_trayIcon.hIcon16);
         SetWindowPos(hDlg, HWND_TOP, 100, 100, 0, 0, SWP_NOSIZE);
         break;
 
