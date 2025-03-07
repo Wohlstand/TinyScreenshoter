@@ -32,5 +32,6 @@ typedef struct ShotData ShotData;
 void closePngSaverThread();
 
 void cmd_makeScreenshot(HWND hWnd, ShotData *data);
+void cmd_dumpClipboard(HWND hWnd, ShotData *data);
 
 #endif /* SHOT_PROC_H */

@@ -93,7 +93,6 @@ void ShotData_clear(ShotData *data)
 
 void ShotData_update(ShotData *data)
 {
-    RECT r;
     LONG w, h;
     size_t newSize;
 

@@ -162,6 +162,10 @@ static BOOL CALLBACK SettingsDialogueProc(HWND hDlg, UINT iMsg, WPARAM wParam, L
             cmd_makeScreenshot(hDlg, &g_shotData);
             break;
 
+        case ID_BUTTON_SAVE_CLIP:
+            cmd_dumpClipboard(hDlg, &g_shotData);
+            break;
+
         case ID_BUTTON_SET_PATH:
             ZeroMemory(&ofn, sizeof(ofn));
             ofn.hwndOwner = hDlg;

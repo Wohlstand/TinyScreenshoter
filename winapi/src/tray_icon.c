@@ -122,7 +122,7 @@ static BOOL OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
         break;
 
     case IDM_SAVECLIP:
-        cmd_makeScreenshot(hWnd, &g_shotData);
+        cmd_dumpClipboard(hWnd, &g_shotData);
         break;
 
     case IDM_QUIT:
@@ -193,28 +193,23 @@ ATOM regMyWindowClass(HINSTANCE hInst, LPCSTR lpzClassName)
 int initSysTrayIcon(HINSTANCE hInstance)
 {
     LPCSTR lpzClass = "TinyShotTrayIconClass";
-    RECT screen_rect;
-    int x, y;
 
     ZeroMemory(&g_trayIcon, sizeof(g_trayIcon));
     initLibraries();
 
     g_trayIcon.currentShellVersion = detectShellVersion();
-    g_trayIcon.notifyIconSizeA = FIELD_OFFSET(NOTIFYICONDATAA, szTip[64]); // NOTIFYICONDATAA_V1_SIZE
-    g_trayIcon.notifyIconSizeW = FIELD_OFFSET(NOTIFYICONDATAW, szTip[64]); // NOTIFYICONDATAW_V1_SIZE;
+    g_trayIcon.notifyIconSizeA = FIELD_OFFSET(NOTIFYICONDATAA, szTip[64]);
+    g_trayIcon.notifyIconSizeW = FIELD_OFFSET(NOTIFYICONDATAW, szTip[64]);
     g_trayIcon.maxTipLength = 64;
 
     if(!regMyWindowClass(hInstance, lpzClass))
         return 1;
 
-    GetWindowRect(GetDesktopWindow(),&screen_rect); // разрешение экрана
-    x = screen_rect.right / 2 - 150;
-    y = screen_rect.bottom / 2 - 75;
-
     g_trayIcon.hIcon32 = (HICON)LoadImageA(hInstance, MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR);
     g_trayIcon.hIcon16 = (HICON)LoadImageA(hInstance, MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
 
-    g_trayIconHWnd = CreateWindowA(lpzClass, "SysTrayWindow", WS_OVERLAPPEDWINDOW, x, y, 300, 150, NULL, NULL, hInstance, NULL);
+    g_trayIconHWnd = CreateWindowA(lpzClass, "SysTrayWindow", WS_OVERLAPPEDWINDOW,
+                                   100, 100, 300, 150, NULL, NULL, hInstance, NULL);
 
     if(!g_trayIconHWnd)
         return 2;

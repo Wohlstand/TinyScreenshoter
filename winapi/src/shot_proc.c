@@ -33,6 +33,7 @@
 
 #define STB_IMAGE_WRITE_STATIC
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STBI_WRITE_NO_STDIO
 #include "stb_image_write.h"
 
 
@@ -68,13 +69,19 @@ DWORD WINAPI png_saver_thread(LPVOID lpParameter)
     free(saver->pix_data);
     free(saver);
 
-    MessageBeep(MB_ICONASTERISK);
+    MessageBeep(MB_ICONEXCLAMATION);
 
     return 0;
 }
 
 void closePngSaverThread()
 {
+    (void)stbi_write_png_to_func;
+    (void)stbi_write_jpg_to_func;
+    (void)stbi_write_tga_to_func;
+    (void)stbi_write_bmp_to_func;
+    (void)stbi_flip_vertically_on_write;
+
     if(s_saverThread)
     {
         WaitForSingleObject(s_saverThread, INFINITE);
@@ -88,8 +95,7 @@ void cmd_makeScreenshot(HWND hWnd, ShotData *data)
     BITMAPINFO bi;
     SaveData *saver = NULL;
     SYSTEMTIME ltime;
-    uint8_t *pix8;
-    uint8_t tmp;
+    uint8_t *pix8, tmp;
     LONG i;
 
     closePngSaverThread();
@@ -150,6 +156,98 @@ void cmd_makeScreenshot(HWND hWnd, ShotData *data)
             png_saver_thread(saver);
         }
     }
+}
 
-    MessageBeep(MB_ICONEXCLAMATION);
+void cmd_dumpClipboard(HWND hWnd, ShotData *data)
+{
+    SaveData *saver = NULL;
+    SYSTEMTIME ltime;
+    BITMAP bitmapInfo;
+    BITMAPINFO bi;
+    HBITMAP bBitClip;
+    uint8_t *img_src, *pix8, tmp;
+    LONG i;
+    size_t pixSize;
+
+    closePngSaverThread();
+
+    if(!IsClipboardFormatAvailable(CF_BITMAP))
+        return;
+
+    if(OpenClipboard(NULL))
+    {
+        bBitClip = (HBITMAP)GetClipboardData(CF_BITMAP);
+
+        if(bBitClip)
+        {
+            GetObject(bBitClip, sizeof( BITMAP ), &bitmapInfo);
+
+            pixSize = bitmapInfo.bmWidth * bitmapInfo.bmHeight * 4;
+            img_src = malloc(pixSize);
+            if(!img_src)
+            {
+                errorMessageBox(hWnd, "Out of memory: %s", "Error");
+                CloseClipboard();
+                return;
+            }
+
+            memset(&bi, 0, sizeof(BITMAPINFO));
+            bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+            bi.bmiHeader.biWidth = bitmapInfo.bmWidth;
+            bi.bmiHeader.biHeight = -bitmapInfo.bmHeight;
+            bi.bmiHeader.biPlanes = 1;
+            bi.bmiHeader.biBitCount = 32;
+            bi.bmiHeader.biCompression = BI_RGB;
+            bi.bmiHeader.biSizeImage = data->m_screenW * data->m_screenH * 4;
+
+            if(GetDIBits(GetDC(GetClipboardOwner()), bBitClip, 0, bitmapInfo.bmHeight, img_src, &bi, DIB_RGB_COLORS) == 0)
+            {
+                errorMessageBox(hWnd, "Failed to take the clipboard content using GetDIBits: %s", "Whoops");
+                CloseClipboard();
+                free(img_src);
+                return;
+            }
+
+            // DeleteDC(tempDC);
+            MessageBeep(MB_OK);
+
+            saver = (SaveData*)malloc(sizeof(SaveData));
+            if(saver)
+            {
+                ZeroMemory(saver, sizeof(SaveData));
+
+                GetLocalTime(&ltime);
+
+                saver->w = bitmapInfo.bmWidth;
+                saver->h = bitmapInfo.bmHeight;
+                saver->pitch = bitmapInfo.bmWidth * 4;
+                snprintf(saver->save_path, MAX_PATH, "%s\\Scr_%04u-%02u-%02u_%02u-%02u-%02u.png",
+                         g_settings.savePath,
+                         ltime.wYear, ltime.wMonth, ltime.wDay,
+                         ltime.wHour, ltime.wMinute, ltime.wSecond);
+                saver->pix_data = img_src;
+                saver->pix_len = pixSize;
+
+                pix8 = img_src;
+                for(i = 0; i < saver->w * saver->h; ++i)
+                {
+                    tmp = pix8[0];
+                    pix8[0] = pix8[2];
+                    pix8[2] = tmp;
+                    pix8[3] = 0xFF;
+                    pix8 += 4;
+                }
+
+                s_saverThread = CreateThread(NULL, 0, &png_saver_thread, (PVOID)saver, 0, &s_saverThreadId);
+
+                if(!s_saverThread)
+                {
+                    errorMessageBox(hWnd, "Failed to make thread: %s.\n\nTrying without.", "Whoops");
+                    png_saver_thread(saver);
+                }
+            }
+        }
+
+        CloseClipboard();
+    }
 }
