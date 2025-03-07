@@ -166,6 +166,8 @@ void cmd_dumpClipboard(HWND hWnd, ShotData *data)
     BITMAPINFO bi;
     HBITMAP bBitClip;
     uint8_t *img_src, *pix8, tmp;
+    HDC bBitClipDC;
+    HWND bBitClipOwner;
     LONG i;
     size_t pixSize;
 
@@ -200,15 +202,19 @@ void cmd_dumpClipboard(HWND hWnd, ShotData *data)
             bi.bmiHeader.biCompression = BI_RGB;
             bi.bmiHeader.biSizeImage = data->m_screenW * data->m_screenH * 4;
 
-            if(GetDIBits(GetDC(GetClipboardOwner()), bBitClip, 0, bitmapInfo.bmHeight, img_src, &bi, DIB_RGB_COLORS) == 0)
+            bBitClipOwner = GetClipboardOwner();
+            bBitClipDC = GetDC(bBitClipOwner);
+
+            if(GetDIBits(bBitClipDC, bBitClip, 0, bitmapInfo.bmHeight, img_src, &bi, DIB_RGB_COLORS) == 0)
             {
                 errorMessageBox(hWnd, "Failed to take the clipboard content using GetDIBits: %s", "Whoops");
+                ReleaseDC(bBitClipOwner, bBitClipDC);
                 CloseClipboard();
                 free(img_src);
                 return;
             }
 
-            // DeleteDC(tempDC);
+            ReleaseDC(bBitClipOwner, bBitClipDC);
             MessageBeep(MB_OK);
 
             saver = (SaveData*)malloc(sizeof(SaveData));
