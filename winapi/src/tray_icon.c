@@ -130,6 +130,8 @@ static BOOL OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
             SendMessage(hWnd, WM_DESTROY, (WPARAM)0, (LPARAM)0);
         else
             SendMessage(hWnd, WM_CLOSE, (WPARAM)0, (LPARAM)0);
+        settingsDestroy();
+        closeSysTrayIcon();
         closePngSaverThread();
         break;
 
