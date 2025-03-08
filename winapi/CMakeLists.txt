@@ -16,6 +16,7 @@ add_executable(TinyScreenshoterWin WIN32
     src/shot_hooks.c src/shot_hooks.h
     src/settings.c src/settings.h
     src/misc.c src/misc.h
+    src/ftp_sender.c src/ftp_sender.h
     res/tinyscreen.rc
     res/resource.h res/resource_ex.h
 
@@ -30,5 +31,5 @@ if(NOT MSVC)
 endif()
 
 target_include_directories(TinyScreenshoterWin PRIVATE src res ../lib)
-target_link_libraries(TinyScreenshoterWin PRIVATE shlwapi comctl32 gdi32 user32)
+target_link_libraries(TinyScreenshoterWin PRIVATE wsock32 shlwapi comctl32 gdi32 user32)
 target_link_options(TinyScreenshoterWin PRIVATE -static -static-libgcc)

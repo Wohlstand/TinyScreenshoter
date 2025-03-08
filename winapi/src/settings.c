@@ -139,18 +139,50 @@ static int CALLBACK SeelctDirCallback(HWND hwnd, UINT uMsg, LPARAM lParam, LPARA
     return 0;
 }
 
+static void syncFtpEnable(HWND hwnd)
+{
+    EnableWindow(GetDlgItem(hwnd, ID_FTP_HOST), g_settings.ftpEnable);
+    EnableWindow(GetDlgItem(hwnd, ID_FTP_PORT), g_settings.ftpEnable);
+    EnableWindow(GetDlgItem(hwnd, ID_FTP_USER), g_settings.ftpEnable);
+    EnableWindow(GetDlgItem(hwnd, ID_FTP_PASSWORD), g_settings.ftpEnable);
+    EnableWindow(GetDlgItem(hwnd, ID_FTP_DIRECTORY), g_settings.ftpEnable);
+    EnableWindow(GetDlgItem(hwnd, ID_FTP_REMOVE_POST), g_settings.ftpEnable);
+
+    EnableWindow(GetDlgItem(hwnd, FTP_LABEL_HOST), g_settings.ftpEnable);
+    EnableWindow(GetDlgItem(hwnd, FTP_LABEL_PORT), g_settings.ftpEnable);
+    EnableWindow(GetDlgItem(hwnd, FTP_LABEL_USER), g_settings.ftpEnable);
+    EnableWindow(GetDlgItem(hwnd, FTP_LABEL_PASSWORD), g_settings.ftpEnable);
+    EnableWindow(GetDlgItem(hwnd, FTP_LABEL_DIR), g_settings.ftpEnable);
+}
+
+static void syncWidget(HWND hwnd)
+{
+    char num[6];
+    SendDlgItemMessageA(hwnd, ID_FTP_ENABLE, BM_SETCHECK, g_settings.ftpEnable, 0);
+    syncFtpEnable(hwnd);
+    SendDlgItemMessageA(hwnd, ID_FTP_HOST, WM_SETTEXT, (WPARAM)NULL, (LPARAM)g_settings.ftpHost);
+    snprintf(num, 6, "%u", g_settings.ftpPort);
+    SendDlgItemMessageA(hwnd, ID_FTP_PORT, WM_SETTEXT, (WPARAM)NULL, (LPARAM)num);
+    SendDlgItemMessageA(hwnd, ID_FTP_USER, WM_SETTEXT, (WPARAM)NULL, (LPARAM)g_settings.ftpUser);
+    SendDlgItemMessageA(hwnd, ID_FTP_PASSWORD, WM_SETTEXT, (WPARAM)NULL, (LPARAM)g_settings.ftpPassword);
+    SendDlgItemMessageA(hwnd, ID_FTP_DIRECTORY, WM_SETTEXT, (WPARAM)NULL, (LPARAM)g_settings.ftpSavePath);
+    SendDlgItemMessageA(hwnd, ID_FTP_REMOVE_POST, BM_SETCHECK, g_settings.ftpRemoveUploaded, 0);
+}
+
 static BOOL CALLBACK SettingsDialogueProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     BROWSEINFO ofn;
     LPITEMIDLIST pidl;
-    // IMalloc *imalloc;
+    char buff_s[MAX_PATH];
+    uint16_t buff_u = 0;
 
     switch(iMsg)
     {
     case WM_INITDIALOG:
-        SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)g_trayIcon.hIcon32);
-        SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)g_trayIcon.hIcon16);
+        SendMessageA(hDlg, WM_SETICON, ICON_BIG, (LPARAM)g_trayIcon.hIcon32);
+        SendMessageA(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)g_trayIcon.hIcon16);
         SetWindowPos(hDlg, HWND_TOP, 100, 100, 0, 0, SWP_NOSIZE);
+        syncWidget(hDlg);
         break;
 
     case WM_CLOSE:
@@ -186,6 +218,99 @@ static BOOL CALLBACK SettingsDialogueProc(HWND hDlg, UINT iMsg, WPARAM wParam, L
                 settingsSave();
             }
 
+            break;
+
+        case ID_FTP_ENABLE:
+            if(HIWORD(wParam) == BN_CLICKED)
+            {
+                g_settings.ftpEnable = SendDlgItemMessageA(hDlg, ID_FTP_ENABLE, (UINT)BM_GETCHECK, 0, 0);
+                syncFtpEnable(hDlg);
+                settingsSave();
+            }
+            break;
+
+        case ID_FTP_REMOVE_POST:
+            if(HIWORD(wParam) == BN_CLICKED)
+            {
+                g_settings.ftpRemoveUploaded = SendDlgItemMessageA(hDlg, ID_FTP_REMOVE_POST, (UINT)BM_GETCHECK, 0, 0);
+                settingsSave();
+            }
+            break;
+
+        case ID_FTP_HOST:
+            if(HIWORD(wParam) == EN_KILLFOCUS)
+            {
+                GetDlgItemTextA(hDlg, ID_FTP_HOST, buff_s, 120);
+
+                if(strncmp(g_settings.ftpHost, buff_s, 120) != 0)
+                {
+                    strncpy(g_settings.ftpHost, buff_s, 120);
+                    printf("FTP host field changed: %s\n", g_settings.ftpHost);
+                    fflush(stdout);
+                    settingsSave();
+                }
+            }
+            break;
+
+        case ID_FTP_PORT:
+            if(HIWORD(wParam) == EN_KILLFOCUS)
+            {
+                GetDlgItemTextA(hDlg, ID_FTP_PORT, buff_s, 6);
+                buff_u = (uint16_t)strtoul(buff_s, NULL, 10);
+
+                if(g_settings.ftpPort != buff_u)
+                {
+                    g_settings.ftpPort = buff_u;
+                    printf("FTP port field changed: %u\n", g_settings.ftpPort);
+                    fflush(stdout);
+                    settingsSave();
+                }
+            }
+            break;
+
+        case ID_FTP_USER:
+            if(HIWORD(wParam) == EN_KILLFOCUS)
+            {
+                GetDlgItemTextA(hDlg, ID_FTP_USER, buff_s, 120);
+
+                if(strncmp(g_settings.ftpUser, buff_s, 120) != 0)
+                {
+                    strncpy(g_settings.ftpUser, buff_s, 120);
+                    printf("FTP user field changed: %s\n", g_settings.ftpUser);
+                    fflush(stdout);
+                    settingsSave();
+                }
+            }
+            break;
+
+        case ID_FTP_PASSWORD:
+            if(HIWORD(wParam) == EN_KILLFOCUS)
+            {
+                GetDlgItemTextA(hDlg, ID_FTP_PASSWORD, buff_s, 120);
+
+                if(strncmp(g_settings.ftpPassword, buff_s, 120) != 0)
+                {
+                    strncpy(g_settings.ftpPassword, buff_s, 120);
+                    printf("FTP password field changed: %s\n", g_settings.ftpPassword);
+                    fflush(stdout);
+                    settingsSave();
+                }
+            }
+            break;
+
+        case ID_FTP_DIRECTORY:
+            if(HIWORD(wParam) == EN_KILLFOCUS)
+            {
+                GetDlgItemTextA(hDlg, ID_FTP_DIRECTORY, buff_s, MAX_PATH);
+
+                if(strncmp(g_settings.ftpSavePath, buff_s, MAX_PATH) != 0)
+                {
+                    strncpy(g_settings.ftpSavePath, buff_s, MAX_PATH);
+                    printf("FTP password field changed: %s\n", g_settings.ftpPassword);
+                    fflush(stdout);
+                    settingsSave();
+                }
+            }
             break;
         }
         break;

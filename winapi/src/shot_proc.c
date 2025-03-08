@@ -29,6 +29,7 @@
 
 #include "shot_proc.h"
 #include "shot_data.h"
+#include "ftp_sender.h"
 #include "settings.h"
 #include "misc.h"
 
@@ -136,6 +137,9 @@ static DWORD WINAPI png_saver_thread(LPVOID lpParameter)
             }
 
             fclose(f);
+
+            if(g_settings.ftpEnable)
+                ftpSender_queueFile(NULL, saver->save_path);
         }
 
         free(saver->pix_data);
@@ -184,7 +188,7 @@ static BOOL tryRunPngThread(HWND hWnd)
         s_saverThread = CreateThread(NULL, 0, &png_saver_thread, NULL, 0, &s_saverThreadId);
         if(!s_saverThread)
         {
-            errorMessageBox(hWnd, "Failed to make thread: %s.\n\nTrying without.", "Whoops");
+            errorMessageBox(hWnd, "Failed to make PNG saver thread: %s.\n\nTrying without.", "Whoops");
             return FALSE;
         }
     }
@@ -283,7 +287,7 @@ void cmd_makeScreenshot(HWND hWnd, ShotData *data)
         queue_insert(saver);
 
         if(!tryRunPngThread(hWnd))
-            png_saver_thread(saver);
+            png_saver_thread(NULL);
     }
 }
 
@@ -367,7 +371,7 @@ void cmd_dumpClipboard(HWND hWnd, ShotData *data)
                 queue_insert(saver);
 
                 if(!tryRunPngThread(hWnd))
-                    png_saver_thread(saver);
+                    png_saver_thread(NULL);
             }
         }
 

@@ -21,13 +21,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef MISC_H
-#define MISC_H
+
+#ifndef FTP_SENDER_H
+#define FTP_SENDER_H
 
 #include <windef.h>
 
-void errorMessageBox(HWND hWnd, const char *errorFormat, const char *msgBoxTitle);
+void ftpSender_init();
+void ftpSender_quit();
 
-char *shot_strtokr(char *s1, const char *s2, char **ptr);
+void ftpSender_queueFile(HWND hWnd, const char *filePath);
 
-#endif // MISC_H
+#endif // FTP_SENDER_H

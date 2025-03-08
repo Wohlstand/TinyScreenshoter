@@ -32,6 +32,7 @@
 #include "shot_proc.h"
 #include "shot_data.h"
 #include "shot_hooks.h"
+#include "ftp_sender.h"
 #include "tray_icon.h"
 #include "settings.h"
 
@@ -61,6 +62,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     InitCommonControls();
 
     shotProc_init();
+    ftpSender_init();
     settingsInit(hInstance);
     ShotData_init(&g_shotData);
 
@@ -77,6 +79,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     settingsDestroy();
     closeSysTrayIcon();
     shotProc_quit();
+    ftpSender_quit();
 
     ShotData_free(&g_shotData);
 
