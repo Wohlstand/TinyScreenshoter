@@ -31,10 +31,6 @@
 #include "settings.h"
 #include "misc.h"
 
-//#define STB_IMAGE_WRITE_STATIC
-//#define STB_IMAGE_WRITE_IMPLEMENTATION
-//#define STBI_WRITE_NO_STDIO
-//#include "stb_image_write.h"
 #include "spng.h"
 
 
@@ -96,12 +92,6 @@ DWORD WINAPI png_saver_thread(LPVOID lpParameter)
 
 void closePngSaverThread()
 {
-//    (void)stbi_write_png_to_func;
-//    (void)stbi_write_jpg_to_func;
-//    (void)stbi_write_tga_to_func;
-//    (void)stbi_write_bmp_to_func;
-//    (void)stbi_flip_vertically_on_write;
-
     if(s_saverThread)
     {
         WaitForSingleObject(s_saverThread, INFINITE);
