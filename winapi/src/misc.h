@@ -28,6 +28,8 @@
 
 void errorMessageBox(HWND hWnd, const char *errorFormat, const char *msgBoxTitle);
 
+void msgBoxPr(HWND hWnd, UINT mode, const char *msgBoxTitle, const char *errorFormat, ...);
+
 char *shot_strtokr(char *s1, const char *s2, char **ptr);
 
 void debugLog(const char *fmt, ...);

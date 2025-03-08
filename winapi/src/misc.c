@@ -54,6 +54,18 @@ void errorMessageBox(HWND hWnd, const char *errorFormat, const char *msgBoxTitle
     MessageBoxA(hWnd, outBuffer, msgBoxTitle, MB_OK|MB_ICONERROR);
 }
 
+void msgBoxPr(HWND hWnd, UINT mode, const char *msgBoxTitle, const char *errorFormat, ...)
+{
+    char outBuffer[2048];
+    va_list args;
+    va_start(args, errorFormat);
+    vsnprintf(outBuffer, 2048, errorFormat, args);
+    fflush(stdout);
+    va_end(args);
+
+    MessageBoxA(hWnd, outBuffer, msgBoxTitle, mode);
+}
+
 char *shot_strtokr(char *s1, const char *s2, char **ptr)
 {
     const char *p = s2;

@@ -103,14 +103,72 @@ static void queue_clear()
 static HANDLE s_senderThread = NULL;
 static DWORD s_senderThreadId = 0;
 
+static void sendFtpCommand(char *outBuffer, size_t outBufferSize,
+                           char *inBuffer, size_t inBufferSize,
+                           SOCKET ftp_sock, const char *cmd, const char *data)
+{
+    outBuffer[0] = '\0';
+    strncat(outBuffer, cmd, outBufferSize);
+    strncat(outBuffer, " ", outBufferSize);
+    strncat(outBuffer, data, outBufferSize);
+    strncat(outBuffer, "\r\n", outBufferSize);
+    send(ftp_sock, outBuffer, strlen(outBuffer), 0);
+
+    ZeroMemory(inBuffer, inBufferSize);
+    recv(ftp_sock, inBuffer, inBufferSize, 0);
+}
+
+static void sendFtpCommandNR(char *outBuffer, size_t outBufferSize,
+                             SOCKET ftp_sock, const char *cmd, const char *data)
+{
+    outBuffer[0] = '\0';
+    strncat(outBuffer, cmd, outBufferSize);
+    strncat(outBuffer, " ", outBufferSize);
+    strncat(outBuffer, data, outBufferSize);
+    strncat(outBuffer, "\r\n", outBufferSize);
+    send(ftp_sock, outBuffer, strlen(outBuffer), 0);
+}
+
+static void sendFtpCommandND(char *outBuffer, size_t outBufferSize,
+                             char *inBuffer, size_t inBufferSize,
+                             SOCKET ftp_sock, const char *cmd)
+{
+    outBuffer[0] = '\0';
+    strncat(outBuffer, cmd, outBufferSize);
+    strncat(outBuffer, "\r\n", outBufferSize);
+    send(ftp_sock, outBuffer, strlen(outBuffer), 0);
+
+    ZeroMemory(inBuffer, inBufferSize);
+    recv(ftp_sock, inBuffer, inBufferSize, 0);
+}
+
+static void ftpCleanUp(SOCKET *ftp_sock, SOCKET *p_sock)
+{
+    if(*p_sock)
+    {
+        closesocket(*p_sock);
+        *p_sock = 0;
+    }
+
+    if(*ftp_sock)
+    {
+        closesocket(*ftp_sock);
+        *ftp_sock = 0;
+    }
+
+    WSACleanup();
+    queue_clear();
+}
+
 static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
 {
     WSADATA w_data;
-    SOCKET ftp_sock, p_sock;
+    SOCKET ftp_sock = 0, p_sock = 0;
     SOCKADDR_IN server, p_server;
-    int try_count = 0, conn_error, num_commas;
+    int try_count = 0, conn_error, num_commas, res;
     uint16_t p_port = 0;
-    char serverMessage[1000], sendBuffer[1000];
+    const size_t bufSizes = 1000;
+    char serverMessage[bufSizes], sendBuffer[bufSizes];
     char *str_pos = NULL, *str_tok_ptr = NULL, *str_seek;
     FileSend *fileToSend = NULL;
     size_t      p_read = 0;
@@ -118,14 +176,20 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
 
     (void)lpParameter;
 
-    WSAStartup(MAKEWORD(2, 2), &w_data);
+    res = WSAStartup(MAKEWORD(2, 2), &w_data);
+    if(res != NO_ERROR)
+    {
+        msgBoxPr(NULL, MB_OK|MB_ICONERROR, "Can't initialize WinSock for FTP sender", "Failed to initialize WinSock: Error %d", res);
+        WSACleanup();
+        queue_clear();
+        return 0;
+    }
 
     ftp_sock = socket(2, SOCK_STREAM, IPPROTO_TCP);
     if(ftp_sock == INVALID_SOCKET)
     {
-        errorMessageBox(NULL, "Failed to initialize WinSock: %s", "Can't run FTP sender");
-        WSACleanup();
-        queue_clear();
+        msgBoxPr(NULL, MB_OK|MB_ICONERROR, "Can't create socket for FTP sender", "Failed to create TCP socket: %ld", WSAGetLastError());
+        ftpCleanUp(&ftp_sock, &p_sock);
         return 0;
     }
 
@@ -140,10 +204,9 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
         try_count++;
         if(try_count >= 10)
         {
-            errorMessageBox(NULL, "Failed to connect the FTP host (10 attempts failed): %s", "Can't run FTP sender");
-            closesocket(ftp_sock);
-            WSACleanup();
-            queue_clear();
+            msgBoxPr(NULL, MB_OK|MB_ICONERROR, "Can't connect FTP server", "Failed to connect to FTP server %s:%u, with error %ld",
+                     g_settings.ftpHost, g_settings.ftpPort, WSAGetLastError());
+            ftpCleanUp(&ftp_sock, &p_sock);
             return 0;
         }
     }
@@ -155,51 +218,36 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
 
     if(g_settings.ftpUser[0] != '\0')
     {
-        sendBuffer[0] = '\0';
-        strncat(sendBuffer, "USER ", 1000);
-        strncat(sendBuffer, g_settings.ftpUser, 1000);
-        strncat(sendBuffer, "\r\n", 1000);
-        send(ftp_sock, sendBuffer, strlen(sendBuffer), 0);
-        ZeroMemory(serverMessage, sizeof(serverMessage));
-        recv(ftp_sock, serverMessage, 1000, 0);
+        sendFtpCommand(sendBuffer, bufSizes, serverMessage, bufSizes, ftp_sock, "USER", g_settings.ftpUser);
         debugLog("--FTP Login: %s\n", serverMessage);
+        // 331 Please specify the password.
 
-        sendBuffer[0] = '\0';
-        strncat(sendBuffer, "PASS ", 1000);
-        strncat(sendBuffer, g_settings.ftpPassword, 1000);
-        strncat(sendBuffer, "\r\n", 1000);
-        send(ftp_sock, sendBuffer, strlen(sendBuffer), 0);
-        ZeroMemory(serverMessage, sizeof(serverMessage));
-        recv(ftp_sock, serverMessage, 1000, 0);
+        sendFtpCommand(sendBuffer, bufSizes, serverMessage, bufSizes, ftp_sock, "PASS", g_settings.ftpPassword);
         debugLog("--FTP Password: %s\n", serverMessage);
+        // 230 Login successful.
+    }
+    else
+    {
+        sendFtpCommand(sendBuffer, bufSizes, serverMessage, bufSizes, ftp_sock, "USER", "anonymouse");
+        debugLog("--FTP Anonymouse login: %s\n", serverMessage);
     }
 
-    sendBuffer[0] = '\0';
-    strncat(sendBuffer, "CWD ", 1000);
-    strncat(sendBuffer, g_settings.ftpSavePath, 1000);
-    strncat(sendBuffer, "\r\n", 1000);
-    send(ftp_sock, sendBuffer, strlen(sendBuffer), 0);
-    ZeroMemory(serverMessage, sizeof(serverMessage));
-    recv(ftp_sock, serverMessage, 1000, 0);
+    sendFtpCommand(sendBuffer, bufSizes, serverMessage, bufSizes, ftp_sock, "CWD", g_settings.ftpSavePath);
     debugLog("--FTP Change dir to %s: %s\n", g_settings.ftpSavePath, serverMessage);
 
-    send(ftp_sock, "TYPE I\r\n", 8, 0);
-    ZeroMemory(serverMessage, sizeof(serverMessage));
-    recv(ftp_sock, serverMessage, 1000, 0);
+    sendFtpCommand(sendBuffer, bufSizes, serverMessage, bufSizes, ftp_sock, "TYPE", "I");
     debugLog("--FTP Type I: %s\n", serverMessage);
+    // 200 Switching to Binary mode.
 
-    send(ftp_sock, "PASV\r\n", 6, 0);
-    ZeroMemory(serverMessage, sizeof(serverMessage));
-    recv(ftp_sock, serverMessage, 1000, 0);
+    sendFtpCommandND(sendBuffer, bufSizes, serverMessage, bufSizes, ftp_sock, "PASV");
     debugLog("--FTP PASV: %s\n", serverMessage);
+    // 227 Entering Passive Mode (172,16,9,141,39,22).
 
     str_pos = strstr(serverMessage, "(");
     if(!str_pos)
     {
-        errorMessageBox(NULL, "Failed to detect FTP mode (corrupted data received): %s", "Can't run FTP sender");
-        closesocket(ftp_sock);
-        WSACleanup();
-        queue_clear();
+        msgBoxPr(NULL, MB_OK|MB_ICONASTERISK, "Failed to send via FTP", "Failed to detect FTP mode (corrupted data received): %s", serverMessage);
+        ftpCleanUp(&ftp_sock, &p_sock);
         return 0;
     }
 
@@ -223,32 +271,26 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
 
     while((fileToSend = queue_get()) != NULL)
     {
-        sendBuffer[0] = '\0';
-        strncat(sendBuffer, "STOR ", 1000);
         str_pos = strrchr(fileToSend->filePath, '\\');
-
         if(!str_pos)
         {
             errorMessageBox(NULL, "Failed to figure filename in the send file path: %s", "Can't run FTP sender");
-            closesocket(ftp_sock);
-            WSACleanup();
+            ftpCleanUp(&ftp_sock, &p_sock);
             free(fileToSend);
-            queue_clear();
             return 0;
         }
 
-        strncat(sendBuffer, str_pos + 1, 1000);
-        strncat(sendBuffer, "\r\n", 1000);
-        send(ftp_sock, sendBuffer, strlen(sendBuffer), 0);
+        str_pos++;
+
+        sendFtpCommandNR(sendBuffer, bufSizes, ftp_sock, "STOR", str_pos);
+        debugLog("--FTP Store file: %s\n", str_pos);
 
         p_sock = socket(2, SOCK_STREAM, IPPROTO_TCP);
         if(p_sock == INVALID_SOCKET)
         {
             errorMessageBox(NULL, "Failed to connect passive port: %s", "Can't run FTP sender");
-            closesocket(ftp_sock);
-            WSACleanup();
+            ftpCleanUp(&ftp_sock, &p_sock);
             free(fileToSend);
-            queue_clear();
             return 0;
         }
 
@@ -266,11 +308,8 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
             if(try_count >= 10)
             {
                 errorMessageBox(NULL, "Failed to connect passive port: %s", "Can't run FTP sender");
-                closesocket(p_sock);
-                closesocket(ftp_sock);
-                WSACleanup();
+                ftpCleanUp(&ftp_sock, &p_sock);
                 free(fileToSend);
-                queue_clear();
                 return 0;
             }
         }
@@ -278,7 +317,7 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
         p_file = fopen(fileToSend->filePath, "rb");
         if(p_file)
         {
-            while((p_read = fread(sendBuffer, 1, 1000, p_file)) > 0)
+            while((p_read = fread(sendBuffer, 1, bufSizes, p_file)) > 0)
                 send(p_sock, sendBuffer, p_read, 0);
             fclose(p_file);
         }
@@ -291,15 +330,11 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
         free(fileToSend);
     }
 
-    sendBuffer[0] = '\0';
-    strncat(sendBuffer, "QUIT\r\n", 1000);
-    send(ftp_sock, sendBuffer, strlen(sendBuffer), 0);
-    ZeroMemory(serverMessage, sizeof(serverMessage));
-    recv(ftp_sock, serverMessage, 1000, 0);
+    sendFtpCommandND(sendBuffer, bufSizes, serverMessage, bufSizes, ftp_sock, "QUIT");
     debugLog("--FTP Quit: %s\n", serverMessage);
+    // 150 Ok to send data.
 
-    closesocket(ftp_sock);
-    WSACleanup();
+    ftpCleanUp(&ftp_sock, &p_sock);
 
     return 0;
 }
