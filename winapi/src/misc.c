@@ -23,6 +23,7 @@
  */
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <windows.h>
 #include "misc.h"
 
@@ -113,4 +114,18 @@ char *shot_strtokr(char *s1, const char *s2, char **ptr)
 
     /* parsed to end of string */
     return s1;
+}
+
+void debugLog(const char *fmt, ...)
+{
+#ifndef NDEBUG
+    va_list args;
+    va_start(args, fmt);
+    printf("Debug: ");
+    vprintf(fmt, args);
+    fflush(stdout);
+    va_end(args);
+#else
+    (void)fmt;
+#endif
 }

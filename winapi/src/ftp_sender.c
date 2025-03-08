@@ -151,8 +151,7 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
     ZeroMemory(serverMessage, sizeof(serverMessage));
     recv(ftp_sock, serverMessage, sizeof(serverMessage), 0);
 
-    printf("--FTP connected: %s\n", serverMessage);
-    fflush(stdout);
+    debugLog("--FTP connected: %s\n", serverMessage);
 
     if(g_settings.ftpUser[0] != '\0')
     {
@@ -163,8 +162,7 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
         send(ftp_sock, sendBuffer, strlen(sendBuffer), 0);
         ZeroMemory(serverMessage, sizeof(serverMessage));
         recv(ftp_sock, serverMessage, 1000, 0);
-        printf("--FTP Login: %s\n", serverMessage);
-        fflush(stdout);
+        debugLog("--FTP Login: %s\n", serverMessage);
 
         sendBuffer[0] = '\0';
         strncat(sendBuffer, "PASS ", 1000);
@@ -173,8 +171,7 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
         send(ftp_sock, sendBuffer, strlen(sendBuffer), 0);
         ZeroMemory(serverMessage, sizeof(serverMessage));
         recv(ftp_sock, serverMessage, 1000, 0);
-        printf("--FTP Password: %s\n", serverMessage);
-        fflush(stdout);
+        debugLog("--FTP Password: %s\n", serverMessage);
     }
 
     sendBuffer[0] = '\0';
@@ -184,20 +181,17 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
     send(ftp_sock, sendBuffer, strlen(sendBuffer), 0);
     ZeroMemory(serverMessage, sizeof(serverMessage));
     recv(ftp_sock, serverMessage, 1000, 0);
-    printf("--FTP Change dir to %s: %s\n", g_settings.ftpSavePath, serverMessage);
-    fflush(stdout);
+    debugLog("--FTP Change dir to %s: %s\n", g_settings.ftpSavePath, serverMessage);
 
     send(ftp_sock, "TYPE I\r\n", 8, 0);
     ZeroMemory(serverMessage, sizeof(serverMessage));
     recv(ftp_sock, serverMessage, 1000, 0);
-    printf("--FTP Type I: %s\n", serverMessage);
-    fflush(stdout);
+    debugLog("--FTP Type I: %s\n", serverMessage);
 
     send(ftp_sock, "PASV\r\n", 6, 0);
     ZeroMemory(serverMessage, sizeof(serverMessage));
     recv(ftp_sock, serverMessage, 1000, 0);
-    printf("--FTP PASV: %s\n", serverMessage);
-    fflush(stdout);
+    debugLog("--FTP PASV: %s\n", serverMessage);
 
     str_pos = strstr(serverMessage, "(");
     if(!str_pos)
@@ -224,8 +218,7 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
         num_commas++;
     }
 
-    printf("--FTP Passive Port: %u\n", p_port);
-    fflush(stdout);
+    debugLog("--FTP Passive Port: %u\n", p_port);
 
 
     while((fileToSend = queue_get()) != NULL)
@@ -303,8 +296,7 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
     send(ftp_sock, sendBuffer, strlen(sendBuffer), 0);
     ZeroMemory(serverMessage, sizeof(serverMessage));
     recv(ftp_sock, serverMessage, 1000, 0);
-    printf("--FTP Quit: %s\n", serverMessage);
-    fflush(stdout);
+    debugLog("--FTP Quit: %s\n", serverMessage);
 
     closesocket(ftp_sock);
     WSACleanup();

@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <windows.h>
 
+#include "misc.h"
 #include "tray_icon.h"
 #include "shot_data.h"
 #include "shot_proc.h"
@@ -182,8 +183,7 @@ void sysTraySetIcon(IconToSet icon)
 {
     if(!g_trayIconHWnd)
     {
-        printf("-- Attempt to switch icon failed\n");
-        fflush(stdout);
+        debugLog("-- Attempt to switch icon failed\n");
         return;
     }
 
@@ -193,24 +193,21 @@ void sysTraySetIcon(IconToSet icon)
         if(g_trayIcon.tnd.hIcon == g_trayIcon.hIcon16)
             return;
         g_trayIcon.tnd.hIcon = g_trayIcon.hIcon16;
-        printf("-- Toggle icon to Normal\n");
-        fflush(stdout);
+        debugLog("-- Toggle icon to Normal\n");
         break;
 
     case SET_ICON_BUSY:
         if(g_trayIcon.tnd.hIcon == g_trayIcon.hIconBusy)
             return;
         g_trayIcon.tnd.hIcon = g_trayIcon.hIconBusy;
-        printf("-- Toggle icon to Busy\n");
-        fflush(stdout);
+        debugLog("-- Toggle icon to Busy\n");
         break;
 
     case SET_ICON_UPLOAD:
         if(g_trayIcon.tnd.hIcon == g_trayIcon.hIconUpload)
             return;
         g_trayIcon.tnd.hIcon = g_trayIcon.hIconUpload;
-        printf("-- Toggle icon to Upload\n");
-        fflush(stdout);
+        debugLog("-- Toggle icon to Upload\n");
         break;
 
     default:

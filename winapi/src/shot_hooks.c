@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-#include <stdio.h>
 #include <windows.h>
 
 #include "misc.h"
@@ -140,8 +139,7 @@ void initIconBlinker(HWND hWnd)
     if(s_icon_activeTimer)
         return;
 
-    printf("-- Starting icon timer\n");
-    fflush(stdout);
+    debugLog("-- Starting icon timer\n");
 
     s_icon_blinkToggle = FALSE;
     s_icon_activeTimer = SetTimer(hWnd, ID_ICON_STATUS_TIMER, 150, &iconBlinkerTimer);
@@ -154,8 +152,7 @@ void initIconBlinkerFinish(HWND hWnd)
     if(!s_icon_activeTimer)
         return;
 
-    printf("-- Killing icon timer\n");
-    fflush(stdout);
+    debugLog("-- Killing icon timer\n");
 
     KillTimer(hWnd, s_icon_activeTimer);
     s_icon_activeTimer = 0;

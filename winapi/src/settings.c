@@ -245,8 +245,7 @@ static BOOL CALLBACK SettingsDialogueProc(HWND hDlg, UINT iMsg, WPARAM wParam, L
                 if(strncmp(g_settings.ftpHost, buff_s, 120) != 0)
                 {
                     strncpy(g_settings.ftpHost, buff_s, 120);
-                    printf("FTP host field changed: %s\n", g_settings.ftpHost);
-                    fflush(stdout);
+                    debugLog("FTP host field changed: %s\n", g_settings.ftpHost);
                     settingsSave();
                 }
             }
@@ -261,8 +260,7 @@ static BOOL CALLBACK SettingsDialogueProc(HWND hDlg, UINT iMsg, WPARAM wParam, L
                 if(g_settings.ftpPort != buff_u)
                 {
                     g_settings.ftpPort = buff_u;
-                    printf("FTP port field changed: %u\n", g_settings.ftpPort);
-                    fflush(stdout);
+                    debugLog("FTP port field changed: %u\n", g_settings.ftpPort);
                     settingsSave();
                 }
             }
@@ -276,8 +274,7 @@ static BOOL CALLBACK SettingsDialogueProc(HWND hDlg, UINT iMsg, WPARAM wParam, L
                 if(strncmp(g_settings.ftpUser, buff_s, 120) != 0)
                 {
                     strncpy(g_settings.ftpUser, buff_s, 120);
-                    printf("FTP user field changed: %s\n", g_settings.ftpUser);
-                    fflush(stdout);
+                    debugLog("FTP user field changed: %s\n", g_settings.ftpUser);
                     settingsSave();
                 }
             }
@@ -291,8 +288,7 @@ static BOOL CALLBACK SettingsDialogueProc(HWND hDlg, UINT iMsg, WPARAM wParam, L
                 if(strncmp(g_settings.ftpPassword, buff_s, 120) != 0)
                 {
                     strncpy(g_settings.ftpPassword, buff_s, 120);
-                    printf("FTP password field changed: %s\n", g_settings.ftpPassword);
-                    fflush(stdout);
+                    debugLog("FTP password field changed: %s\n", g_settings.ftpPassword);
                     settingsSave();
                 }
             }
@@ -306,8 +302,7 @@ static BOOL CALLBACK SettingsDialogueProc(HWND hDlg, UINT iMsg, WPARAM wParam, L
                 if(strncmp(g_settings.ftpSavePath, buff_s, MAX_PATH) != 0)
                 {
                     strncpy(g_settings.ftpSavePath, buff_s, MAX_PATH);
-                    printf("FTP password field changed: %s\n", g_settings.ftpPassword);
-                    fflush(stdout);
+                    debugLog("FTP password field changed: %s\n", g_settings.ftpPassword);
                     settingsSave();
                 }
             }
