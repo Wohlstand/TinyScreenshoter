@@ -36,9 +36,11 @@
 #include <QFtp>
 #include <QtDebug>
 
+
 #ifdef _WIN32
-#include <windows.h>
-#include <mmsystem.h>
+#   include <windows.h>
+#   include <mmsystem.h>
+#   include "spng.h"
 #endif
 
 #ifdef _WIN32
@@ -46,10 +48,6 @@
 TinyScreenshoter* TinyScreenshoter::m_this = nullptr;
 HHOOK TinyScreenshoter::m_msgHook = nullptr;
 #endif
-
-#define STB_IMAGE_WRITE_STATIC
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
 
 void TinyScreenshoter::initHook()
 {
@@ -188,16 +186,36 @@ void TinyScreenshoter::makeScreenshot()
             .arg(fName);
 
 #ifdef _WIN32
-    int raw_len;
-    uint8_t *raw = stbi_write_png_to_mem(m_pixels.data(), m_screenW * 4, m_screenW, m_screenH, 4, &raw_len);
+    struct spng_ihdr ihdr;
+    spng_ctx *ctx;
+    int ret;
 
-    if(raw)
+    memset(&ihdr, 0, sizeof(ihdr));
+    std::wstring upath = fName.toStdWString();
+
+    FILE *f = _wfopen(upath.c_str(), L"wb");
+    if(f)
     {
-        QFile q(saveWhere);
-        q.open(QIODevice::WriteOnly);
-        q.write(reinterpret_cast<char*>(raw), raw_len);
-        q.close();
-        free(raw);
+        ctx = spng_ctx_new(SPNG_CTX_ENCODER);
+        if(ctx)
+        {
+            ihdr.width = m_screenW;
+            ihdr.height = m_screenH;
+            ihdr.color_type = SPNG_COLOR_TYPE_TRUECOLOR_ALPHA;
+            ihdr.bit_depth = 8;
+
+            spng_set_ihdr(ctx, &ihdr);
+            spng_set_png_file(ctx, f);
+
+            ret = spng_encode_image(ctx, m_pixels.data(), m_pixels.size(), SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
+
+            if(ret)
+                QMessageBox::critical(nullptr, "PNG Encode error", spng_strerror(ret));
+
+            spng_ctx_free(ctx);
+        }
+
+        fclose(f);
     }
 
     MessageBeep(MB_ICONEXCLAMATION);
@@ -491,7 +509,7 @@ void TinyScreenshoter::updatePixels()
     LONG w = r.right - r.left;
     LONG h = r.bottom - r.top;
 
-    int newSize = (w * h * 4) + w;
+    int newSize = (w * h * 4);
 
     if(m_pixels.size() != newSize)
     {

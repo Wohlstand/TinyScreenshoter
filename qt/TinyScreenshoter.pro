@@ -36,8 +36,18 @@ SOURCES += \
         src/tiny_screenshoter.cpp
 
 HEADERS += \
-        src/tiny_screenshoter.h \
-        ../lib/stb_image_write.h
+        src/tiny_screenshoter.h
+
+win32:{
+    DEFINES += SPNG_STATIC SPNG_SSE=0 SPNG_USE_MINIZ
+    SOURCES += \
+            ../lib/spng.c \
+            ../lib/miniz.c
+
+    HEADERS += \
+            ../lib/spng.h \
+            ../lib/miniz.h
+}
 
 FORMS += \
         src/tiny_screenshoter.ui

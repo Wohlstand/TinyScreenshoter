@@ -2,5 +2,7 @@
     <qresource prefix="/">
         <file>ts-tray.ico</file>
         <file>ts-tray.png</file>
+        <file>ts-busy.ico</file>
+        <file>ts-send.ico</file>
     </qresource>
 </RCC>
