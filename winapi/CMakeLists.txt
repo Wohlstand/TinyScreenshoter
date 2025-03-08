@@ -18,7 +18,12 @@ add_executable(TinyScreenshoterWin WIN32
     src/misc.c src/misc.h
     res/tinyscreen.rc
     res/resource.h res/resource_ex.h
+
+    ../lib/spng.c ../lib/spng.h
+    ../lib/miniz.c ../lib/miniz.h
 )
+
+target_compile_definitions(TinyScreenshoterWin PRIVATE -DSPNG_STATIC -DSPNG_SSE=0 -DSPNG_USE_MINIZ)
 
 if(NOT MSVC)
     target_compile_options(TinyScreenshoterWin PRIVATE -Wall)

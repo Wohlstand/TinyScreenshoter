@@ -31,10 +31,11 @@
 #include "settings.h"
 #include "misc.h"
 
-#define STB_IMAGE_WRITE_STATIC
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#define STBI_WRITE_NO_STDIO
-#include "stb_image_write.h"
+//#define STB_IMAGE_WRITE_STATIC
+//#define STB_IMAGE_WRITE_IMPLEMENTATION
+//#define STBI_WRITE_NO_STDIO
+//#include "stb_image_write.h"
+#include "spng.h"
 
 
 typedef struct
@@ -54,15 +55,34 @@ DWORD WINAPI png_saver_thread(LPVOID lpParameter)
 {
     SaveData *saver = (SaveData*)lpParameter;
     FILE *f;
-    int raw_len;
-    uint8_t *raw = stbi_write_png_to_mem(saver->pix_data, saver->pitch, saver->w, saver->h, 4, &raw_len);
-    /* stbi_write_bmp("test.bmp", data->m_screenW, data->m_screenH, 4, data->m_pixels); */
+    struct spng_ihdr ihdr;
+    spng_ctx *ctx;
+    int ret;
 
-    if(raw)
+    ZeroMemory(&ihdr, sizeof(ihdr));
+
+    f = fopen(saver->save_path, "wb");
+    if(f)
     {
-        f = fopen(saver->save_path, "wb");
-        fwrite(raw, 1, raw_len, f);
-        fflush(f);
+        ctx = spng_ctx_new(SPNG_CTX_ENCODER);
+        if(ctx)
+        {
+            ihdr.width = saver->w;
+            ihdr.height = saver->h;
+            ihdr.color_type = SPNG_COLOR_TYPE_TRUECOLOR_ALPHA;
+            ihdr.bit_depth = 8;
+
+            spng_set_ihdr(ctx, &ihdr);
+            spng_set_png_file(ctx, f);
+
+            ret = spng_encode_image(ctx, saver->pix_data, saver->pix_len, SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
+
+            if(ret)
+                MessageBoxA(NULL, spng_strerror(ret), "PNG Encode error", MB_OK|MB_ICONERROR);
+
+            spng_ctx_free(ctx);
+        }
+
         fclose(f);
     }
 
@@ -76,11 +96,11 @@ DWORD WINAPI png_saver_thread(LPVOID lpParameter)
 
 void closePngSaverThread()
 {
-    (void)stbi_write_png_to_func;
-    (void)stbi_write_jpg_to_func;
-    (void)stbi_write_tga_to_func;
-    (void)stbi_write_bmp_to_func;
-    (void)stbi_flip_vertically_on_write;
+//    (void)stbi_write_png_to_func;
+//    (void)stbi_write_jpg_to_func;
+//    (void)stbi_write_tga_to_func;
+//    (void)stbi_write_bmp_to_func;
+//    (void)stbi_flip_vertically_on_write;
 
     if(s_saverThread)
     {

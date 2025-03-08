@@ -99,14 +99,14 @@ void ShotData_update(ShotData *data)
     w = GetSystemMetrics(SM_CXSCREEN);
     h = GetSystemMetrics(SM_CYSCREEN);
 
-    newSize = (w * h * 4) + w;
+    newSize = (w * h * 4);
 
     if(data->m_pixels_size != newSize)
     {
         ShotData_clear(data);
 
         if(!data->m_pixels)
-            data->m_pixels = (uint8_t*)malloc(newSize);
+            data->m_pixels = (uint8_t*)malloc(newSize + w);
         else
             data->m_pixels = (uint8_t*)realloc(data->m_pixels, newSize);
 
