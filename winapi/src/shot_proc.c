@@ -29,6 +29,8 @@
 
 #include "shot_proc.h"
 #include "shot_data.h"
+#include "shot_hooks.h"
+#include "tray_icon.h"
 #include "ftp_sender.h"
 #include "settings.h"
 #include "misc.h"
@@ -151,6 +153,17 @@ static DWORD WINAPI png_saver_thread(LPVOID lpParameter)
     return 0;
 }
 
+BOOL shotProc_isBusy()
+{
+    DWORD res = 0;
+
+    if(s_saverThread)
+        res = WaitForSingleObject(s_saverThread, 0);
+    else
+        res = WAIT_OBJECT_0;
+
+    return res != WAIT_OBJECT_0;
+}
 
 void shotProc_init()
 {
@@ -241,6 +254,8 @@ void cmd_makeScreenshot(HWND hWnd, ShotData *data)
     uint8_t *pix8, tmp;
     LONG i;
 
+    sysTraySetIcon(SET_ICON_BUSY);
+
     ShotData_update(data);
     BitBlt(data->m_screen_bitmap_dc, 0, 0, data->m_screenW, data->m_screenH, data->m_screen_dc, 0, 0, SRCCOPY);
 
@@ -287,7 +302,13 @@ void cmd_makeScreenshot(HWND hWnd, ShotData *data)
         queue_insert(saver);
 
         if(!tryRunPngThread(hWnd))
+        {
+            sysTraySetIcon(SET_ICON_BUSY);
             png_saver_thread(NULL);
+            sysTraySetIcon(SET_ICON_NORMAL);
+        }
+        else
+            initIconBlinker(hWnd);
     }
 }
 
@@ -312,6 +333,7 @@ void cmd_dumpClipboard(HWND hWnd, ShotData *data)
 
         if(bBitClip)
         {
+            sysTraySetIcon(SET_ICON_BUSY);
             GetObject(bBitClip, sizeof( BITMAP ), &bitmapInfo);
 
             pixSize = bitmapInfo.bmWidth * bitmapInfo.bmHeight * 4;
@@ -371,7 +393,13 @@ void cmd_dumpClipboard(HWND hWnd, ShotData *data)
                 queue_insert(saver);
 
                 if(!tryRunPngThread(hWnd))
+                {
+                    sysTraySetIcon(SET_ICON_BUSY);
                     png_saver_thread(NULL);
+                    sysTraySetIcon(SET_ICON_NORMAL);
+                }
+                else
+                    initIconBlinker(hWnd);
             }
         }
 

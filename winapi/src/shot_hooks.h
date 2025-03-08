@@ -30,4 +30,7 @@
 void initKeyHook(HWND hWnd, HINSTANCE hInstance);
 void closeKeyHooks(HWND hWnd);
 
+void initIconBlinker(HWND hWnd);
+void initIconBlinkerFinish(HWND hWnd);
+
 #endif /* SHOT_HOOKS_H */

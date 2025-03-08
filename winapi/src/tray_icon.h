@@ -40,6 +40,8 @@ struct TrayIcon
     int maxTipLength;
     HICON hIcon32;
     HICON hIcon16;
+    HICON hIconBusy;
+    HICON hIconUpload;
 };
 
 typedef struct TrayIcon TrayIcon;
@@ -54,6 +56,15 @@ extern TrayIcon g_trayIcon;
 
 void initLibraries();
 int detectShellVersion();
+
+typedef enum
+{
+    SET_ICON_NORMAL = 0,
+    SET_ICON_BUSY,
+    SET_ICON_UPLOAD
+} IconToSet;
+
+void sysTraySetIcon(IconToSet icon);
 
 int initSysTrayIcon(HINSTANCE hInstance);
 void closeSysTrayIcon();

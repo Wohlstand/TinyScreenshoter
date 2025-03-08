@@ -27,6 +27,8 @@
 
 #include <windef.h>
 
+BOOL ftpSender_isBusy();
+
 void ftpSender_init();
 void ftpSender_quit();
 

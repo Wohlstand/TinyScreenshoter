@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <stdio.h>
 #include <windows.h>
 
 #include "tray_icon.h"
@@ -177,6 +178,47 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
     return 0;
 }
 
+void sysTraySetIcon(IconToSet icon)
+{
+    if(!g_trayIconHWnd)
+    {
+        printf("-- Attempt to switch icon failed\n");
+        fflush(stdout);
+        return;
+    }
+
+    switch(icon)
+    {
+    case SET_ICON_NORMAL:
+        if(g_trayIcon.tnd.hIcon == g_trayIcon.hIcon16)
+            return;
+        g_trayIcon.tnd.hIcon = g_trayIcon.hIcon16;
+        printf("-- Toggle icon to Normal\n");
+        fflush(stdout);
+        break;
+
+    case SET_ICON_BUSY:
+        if(g_trayIcon.tnd.hIcon == g_trayIcon.hIconBusy)
+            return;
+        g_trayIcon.tnd.hIcon = g_trayIcon.hIconBusy;
+        printf("-- Toggle icon to Busy\n");
+        fflush(stdout);
+        break;
+
+    case SET_ICON_UPLOAD:
+        if(g_trayIcon.tnd.hIcon == g_trayIcon.hIconUpload)
+            return;
+        g_trayIcon.tnd.hIcon = g_trayIcon.hIconUpload;
+        printf("-- Toggle icon to Upload\n");
+        fflush(stdout);
+        break;
+
+    default:
+        return;
+    }
+
+    Shell_NotifyIconA(NIM_MODIFY, &g_trayIcon.tnd);
+}
 
 ATOM regMyWindowClass(HINSTANCE hInst, LPCSTR lpzClassName)
 {
@@ -210,6 +252,9 @@ int initSysTrayIcon(HINSTANCE hInstance)
     g_trayIcon.hIcon32 = (HICON)LoadImageA(hInstance, MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR);
     g_trayIcon.hIcon16 = (HICON)LoadImageA(hInstance, MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
 
+    g_trayIcon.hIconBusy = (HICON)LoadImageA(hInstance, MAKEINTRESOURCE(IDI_ICON_BUSY), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
+    g_trayIcon.hIconUpload = (HICON)LoadImageA(hInstance, MAKEINTRESOURCE(IDI_ICON_UPLOAD), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
+
     g_trayIconHWnd = CreateWindowA(lpzClass, "SysTrayWindow", WS_OVERLAPPEDWINDOW,
                                    100, 100, 300, 150, NULL, NULL, hInstance, NULL);
 
@@ -234,6 +279,18 @@ int initSysTrayIcon(HINSTANCE hInstance)
 
 void closeSysTrayIcon()
 {
+    if(g_trayIcon.hIcon32)
+        DestroyIcon(g_trayIcon.hIcon32);
+
+    if(g_trayIcon.hIcon16)
+        DestroyIcon(g_trayIcon.hIcon16);
+
+    if(g_trayIcon.hIconBusy)
+        DestroyIcon(g_trayIcon.hIconBusy);
+
+    if(g_trayIcon.hIconUpload)
+        DestroyIcon(g_trayIcon.hIconUpload);
+
     Shell_NotifyIconA(NIM_DELETE, &g_trayIcon.tnd);
     if(lib_sh32)
     {

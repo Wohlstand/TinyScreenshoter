@@ -22,9 +22,13 @@
  * SOFTWARE.
  */
 
+#include <stdio.h>
 #include <windows.h>
 
+#include "misc.h"
 #include "shot_hooks.h"
+#include "ftp_sender.h"
+#include "shot_proc.h"
 #include "tray_icon.h"
 #include "resource.h"
 #include "resource_ex.h"
@@ -84,7 +88,7 @@ void initKeyHook(HWND hWnd, HINSTANCE hInstance)
 
     if(isDosBased) /* Make a watch timer */
     {
-        SetTimer(hWnd, ID_HOOK_TIMER, 100, &win9xWindowHook);
+        SetTimer(hWnd, ID_HOOK_TIMER, 50, &win9xWindowHook);
     }
     else
     {
@@ -97,4 +101,64 @@ void initKeyHook(HWND hWnd, HINSTANCE hInstance)
 void closeKeyHooks(HWND hWnd)
 {
     KillTimer(hWnd, ID_HOOK_TIMER);
+}
+
+
+static BOOL s_icon_blinkToggle = FALSE;
+static UINT_PTR s_icon_activeTimer = 0;
+
+static void CALLBACK iconBlinkerTimer(HWND p1, UINT p2, UINT_PTR p3, DWORD p4)
+{
+    BOOL is_ftp = ftpSender_isBusy();
+    BOOL is_saver = shotProc_isBusy();
+
+    (void)p2; (void)p3; (void)p4;
+
+    s_icon_blinkToggle = !s_icon_blinkToggle;
+
+    if(!s_icon_blinkToggle && is_saver)
+    {
+        if(is_ftp)
+            sysTraySetIcon(SET_ICON_UPLOAD);
+        else
+            sysTraySetIcon(SET_ICON_NORMAL);
+    }
+    else if(is_saver)
+        sysTraySetIcon(SET_ICON_BUSY);
+    else if(is_ftp)
+        sysTraySetIcon(SET_ICON_UPLOAD);
+    else
+    {
+        KillTimer(p1, s_icon_activeTimer);
+        s_icon_activeTimer = 0;
+        sysTraySetIcon(SET_ICON_NORMAL);
+    }
+}
+
+void initIconBlinker(HWND hWnd)
+{
+    if(s_icon_activeTimer)
+        return;
+
+    printf("-- Starting icon timer\n");
+    fflush(stdout);
+
+    s_icon_blinkToggle = FALSE;
+    s_icon_activeTimer = SetTimer(hWnd, ID_ICON_STATUS_TIMER, 150, &iconBlinkerTimer);
+    if(!s_icon_activeTimer)
+        errorMessageBox(hWnd, "Failed to start icon blinker timer: %s", "Error");
+}
+
+void initIconBlinkerFinish(HWND hWnd)
+{
+    if(!s_icon_activeTimer)
+        return;
+
+    printf("-- Killing icon timer\n");
+    fflush(stdout);
+
+    KillTimer(hWnd, s_icon_activeTimer);
+    s_icon_activeTimer = 0;
+    sysTraySetIcon(SET_ICON_NORMAL);
+    s_icon_blinkToggle = 0;
 }

@@ -27,6 +27,8 @@
 #include <windows.h>
 #include <winsock.h>
 #include "misc.h"
+#include "tray_icon.h"
+#include "shot_hooks.h"
 #include "settings.h"
 #include "ftp_sender.h"
 
@@ -310,6 +312,18 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
     return 0;
 }
 
+BOOL ftpSender_isBusy()
+{
+    DWORD res = 0;
+
+    if(s_senderThread)
+        res = WaitForSingleObject(s_senderThread, 0);
+    else
+        res = WAIT_OBJECT_0;
+
+    return res != WAIT_OBJECT_0;
+}
+
 void ftpSender_init()
 {
     if(!s_queue_mutex)
@@ -362,5 +376,12 @@ void ftpSender_queueFile(HWND hWnd, const char *filePath)
     queue_insert(fileToSend);
 
     if(!tryRunFtpThread(hWnd))
+    {
+        sysTraySetIcon(SET_ICON_UPLOAD);
         ftp_sender_thread(NULL);
+        sysTraySetIcon(SET_ICON_NORMAL);
+    }
+    else
+        initIconBlinker(hWnd);
 }
+

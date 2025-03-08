@@ -29,6 +29,7 @@
 
 typedef struct ShotData ShotData;
 
+BOOL shotProc_isBusy();
 void shotProc_init();
 void shotProc_quit();
 void closePngSaverThread();

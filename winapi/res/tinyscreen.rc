@@ -47,6 +47,14 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 IDI_ICON1          ICON           ".\\icon.ico"
 
 
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDI_ICON_BUSY      ICON           ".\\ts-busy.ico"
+
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+IDI_ICON_UPLOAD    ICON           ".\\ts-send.ico"
+
+
 
 //
 // Manifest resources

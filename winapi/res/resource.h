@@ -3,6 +3,8 @@
 #endif
 
 #define IDI_ICON1                               100
+#define IDI_ICON_BUSY                           101
+#define IDI_ICON_UPLOAD                         102
 #define IDD_SETTINGS_DIALOGUE                   103
 #define ID_BUTTON_SET_PATH                      40000
 #define ID_BUTTON_SAVE_CLIP                     40001
