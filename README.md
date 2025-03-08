@@ -1,7 +1,9 @@
 # Tiny Screenshoter
-![icon](res/ts-tray32.png)
+![icon](ts-icon.png)
 
 A small Windows 9x compatible screenshot tool that runs in background and saves PNG screenshots at the selected directory by pressing PrScr keyboard button. It was made by me to simplify making screenshots while making various experiments or playing games on various retro-computers that running old Windows like XP or even Windows 98.
+
+![showcase](showcase.png)
 
 ## How to use it
 - Unpack an executable at any directory (suggested to make a new one, as the config file will be made at the same directory as the executable).
