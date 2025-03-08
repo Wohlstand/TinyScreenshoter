@@ -39,16 +39,16 @@
 
 void runMsgLoop()
 {
-    MSG msg = {0};    //структура сообщения
-    int iGetOk = 0;   //переменная состояния
+    MSG msg = {0};
+    int iGetOk = 0;
 
-    while((iGetOk = GetMessage(&msg, NULL, 0, 0 )) != 0) //цикл сообщений
+    while((iGetOk = GetMessageA(&msg, NULL, 0, 0)) != 0)
     {
         if(iGetOk == -1)
             return;
 
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageA(&msg);
     }
 }
 
