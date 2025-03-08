@@ -129,7 +129,7 @@ jobs:
       shell: bash
       run: |
         cp README.md bin/ReadMe.txt
-        unix2dos bin/bin/ReadMe.txt
+        unix2dos bin/ReadMe.txt
         7z a -tzip bin/TinyScreenshoter-win32-qt.zip ./bin/TinyScreenshoter.exe ./bin/ReadMe.txt
         7z a -tzip bin/TinyScreenshoter-win32-winapi.zip ./winapi/build/TinyScreenshoterWin.exe ./bin/ReadMe.txt
 
