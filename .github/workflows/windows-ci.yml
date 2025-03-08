@@ -90,7 +90,9 @@ jobs:
           export PATH=${{ matrix.config.extra_path }}:${PATH}
           echo "PATH environment: ${PATH}"
         fi
+        cd qt
         /c/Qt/4.4.3/bin/qmake CONFIG+=Release CONFIG-=Debug
+        cd ..
 
     - name: Build (Qt)
       shell: bash
@@ -98,8 +100,10 @@ jobs:
         if [[ ! -z "${{ matrix.config.extra_path }}" ]]; then
           export PATH=${{ matrix.config.extra_path }}:${PATH}
         fi
+        cd qt
         mingw32-make -j 4
-        
+        cd ..
+
     - name: Configure (WinAPI)
       shell: bash
       run: |

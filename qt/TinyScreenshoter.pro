@@ -11,7 +11,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = TinyScreenshoter
 TEMPLATE = app
 
-DESTDIR += $$PWD/bin
+DESTDIR += $$PWD/../bin
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which has been marked as deprecated (the exact warnings
@@ -29,7 +29,7 @@ RC_FILE = res/res.rc
 
 LIBS += -static-libgcc -static-libstdc++ -static -pthread
 
-INCLUDEPATH += src/ lib/
+INCLUDEPATH += src/ ../lib/
 
 SOURCES += \
         src/main.cpp \
@@ -37,7 +37,7 @@ SOURCES += \
 
 HEADERS += \
         src/tiny_screenshoter.h \
-        lib/stb_image_write.h
+        ../lib/stb_image_write.h
 
 FORMS += \
         src/tiny_screenshoter.ui
