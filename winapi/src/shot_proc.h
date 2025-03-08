@@ -29,6 +29,8 @@
 
 typedef struct ShotData ShotData;
 
+void shotProc_init();
+void shotProc_quit();
 void closePngSaverThread();
 
 void cmd_makeScreenshot(HWND hWnd, ShotData *data);

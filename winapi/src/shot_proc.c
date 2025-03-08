@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <shlwapi.h>
 #include <windows.h>
 
 #include "shot_proc.h"
@@ -34,7 +35,7 @@
 #include "spng.h"
 
 
-typedef struct
+typedef struct tagSaveData
 {
     char save_path[MAX_PATH];
     uint8_t *pix_data;
@@ -42,52 +43,153 @@ typedef struct
     uint32_t w;
     uint32_t h;
     uint32_t pitch;
+    struct tagSaveData *b_next;
+    struct tagSaveData *b_prev;
 } SaveData;
+
+static SaveData* s_queue_begin = NULL;
+static SaveData* s_queue_end = NULL;
+static HANDLE s_queue_mutex = 0;
+
+static void queue_insert(SaveData *item)
+{
+    if(s_queue_mutex)
+        WaitForSingleObject(s_queue_mutex, INFINITE);
+
+    if(!s_queue_begin) /* First item */
+    {
+        s_queue_begin = item;
+        s_queue_end = item;
+    }
+    else
+    {
+        s_queue_end->b_next = item;
+        item->b_prev = s_queue_end;
+        s_queue_end = item;
+    }
+
+    if(s_queue_mutex)
+        ReleaseMutex(s_queue_mutex);
+}
+
+static SaveData *queue_get()
+{
+    SaveData *ret = NULL;
+
+    if(s_queue_mutex)
+        WaitForSingleObject(s_queue_mutex, INFINITE);
+
+    if(s_queue_begin)
+    {
+        ret = s_queue_begin;
+        s_queue_begin = s_queue_begin->b_next;
+
+        if(!s_queue_begin) /* Reached end of queue */
+            s_queue_end = NULL;
+        else
+            s_queue_begin->b_prev = NULL;
+    }
+
+    if(s_queue_mutex)
+        ReleaseMutex(s_queue_mutex);
+
+    return ret;
+}
 
 static HANDLE s_saverThread = NULL;
 static DWORD s_saverThreadId = 0;
 
-DWORD WINAPI png_saver_thread(LPVOID lpParameter)
+static DWORD WINAPI png_saver_thread(LPVOID lpParameter)
 {
-    SaveData *saver = (SaveData*)lpParameter;
+    SaveData *saver = NULL;
     FILE *f;
     struct spng_ihdr ihdr;
     spng_ctx *ctx;
     int ret;
 
-    ZeroMemory(&ihdr, sizeof(ihdr));
+    (void)lpParameter;
 
-    f = fopen(saver->save_path, "wb");
-    if(f)
+    while((saver = queue_get()) != NULL)
     {
-        ctx = spng_ctx_new(SPNG_CTX_ENCODER);
-        if(ctx)
+        ZeroMemory(&ihdr, sizeof(ihdr));
+
+        f = fopen(saver->save_path, "wb");
+        if(f)
         {
-            ihdr.width = saver->w;
-            ihdr.height = saver->h;
-            ihdr.color_type = SPNG_COLOR_TYPE_TRUECOLOR_ALPHA;
-            ihdr.bit_depth = 8;
+            ctx = spng_ctx_new(SPNG_CTX_ENCODER);
+            if(ctx)
+            {
+                ihdr.width = saver->w;
+                ihdr.height = saver->h;
+                ihdr.color_type = SPNG_COLOR_TYPE_TRUECOLOR_ALPHA;
+                ihdr.bit_depth = 8;
 
-            spng_set_ihdr(ctx, &ihdr);
-            spng_set_png_file(ctx, f);
+                spng_set_ihdr(ctx, &ihdr);
+                spng_set_png_file(ctx, f);
 
-            ret = spng_encode_image(ctx, saver->pix_data, saver->pix_len, SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
+                ret = spng_encode_image(ctx, saver->pix_data, saver->pix_len, SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
 
-            if(ret)
-                MessageBoxA(NULL, spng_strerror(ret), "PNG Encode error", MB_OK|MB_ICONERROR);
+                if(ret)
+                    MessageBoxA(NULL, spng_strerror(ret), "PNG Encode error", MB_OK|MB_ICONERROR);
 
-            spng_ctx_free(ctx);
+                spng_ctx_free(ctx);
+            }
+
+            fclose(f);
         }
 
-        fclose(f);
+        free(saver->pix_data);
+        free(saver);
+
+        MessageBeep(MB_ICONEXCLAMATION);
     }
 
-    free(saver->pix_data);
-    free(saver);
-
-    MessageBeep(MB_ICONEXCLAMATION);
-
     return 0;
+}
+
+
+void shotProc_init()
+{
+    if(!s_queue_mutex)
+        s_queue_mutex = CreateMutexA(NULL, FALSE, NULL);
+}
+
+void shotProc_quit()
+{
+    if(s_saverThread)
+    {
+        WaitForSingleObject(s_saverThread, INFINITE);
+        CloseHandle(s_saverThread);
+        s_saverThread = NULL;
+    }
+
+    if(s_queue_mutex)
+    {
+        CloseHandle(s_queue_mutex);
+        s_queue_mutex = 0;
+    }
+}
+
+static BOOL tryRunPngThread(HWND hWnd)
+{
+    DWORD res = 0;
+
+    if(s_saverThread)
+        res = WaitForSingleObject(s_saverThread, 0);
+    else
+        res = WAIT_OBJECT_0;
+
+    if(res == WAIT_OBJECT_0)
+    {
+        s_saverThread = CreateThread(NULL, 0, &png_saver_thread, NULL, 0, &s_saverThreadId);
+        if(!s_saverThread)
+        {
+            errorMessageBox(hWnd, "Failed to make thread: %s.\n\nTrying without.", "Whoops");
+            return FALSE;
+        }
+    }
+
+    return TRUE;
 }
 
 void closePngSaverThread()
@@ -100,15 +202,41 @@ void closePngSaverThread()
     }
 }
 
+
+static void generatePngFileName(char *out, size_t out_size)
+{
+    SYSTEMTIME ltime;
+    uint32_t diff = 0;
+    FILE *f;
+
+    GetLocalTime(&ltime);
+
+    snprintf(out, out_size, "%s\\Scr_%04u-%02u-%02u_%02u-%02u-%02u.png",
+             g_settings.savePath,
+             ltime.wYear, ltime.wMonth, ltime.wDay,
+             ltime.wHour, ltime.wMinute, ltime.wSecond);
+
+    while(PathFileExistsA(out))
+    {
+        snprintf(out, out_size, "%s\\Scr_%04u-%02u-%02u_%02u-%02u-%02u-%u.png",
+                 g_settings.savePath,
+                 ltime.wYear, ltime.wMonth, ltime.wDay,
+                 ltime.wHour, ltime.wMinute, ltime.wSecond, ++diff);
+    }
+
+    /* Truncate filename to avoid races */
+    f = fopen(out, "wb");
+    if(f)
+        fclose(f);
+}
+
 void cmd_makeScreenshot(HWND hWnd, ShotData *data)
 {
     BITMAPINFO bi;
     SaveData *saver = NULL;
-    SYSTEMTIME ltime;
     uint8_t *pix8, tmp;
     LONG i;
 
-    closePngSaverThread();
     ShotData_update(data);
     BitBlt(data->m_screen_bitmap_dc, 0, 0, data->m_screenW, data->m_screenH, data->m_screen_dc, 0, 0, SRCCOPY);
 
@@ -144,34 +272,24 @@ void cmd_makeScreenshot(HWND hWnd, ShotData *data)
     if(saver)
     {
         ZeroMemory(saver, sizeof(SaveData));
-
-        GetLocalTime(&ltime);
-
         saver->w = data->m_screenW;
         saver->h = data->m_screenH;
         saver->pitch = data->m_screenW * 4;
-        snprintf(saver->save_path, MAX_PATH, "%s\\Scr_%04u-%02u-%02u_%02u-%02u-%02u.png",
-                 g_settings.savePath,
-                 ltime.wYear, ltime.wMonth, ltime.wDay,
-                 ltime.wHour, ltime.wMinute, ltime.wSecond);
+        generatePngFileName(saver->save_path, MAX_PATH);
         saver->pix_data = malloc(data->m_pixels_size);
         saver->pix_len = data->m_pixels_size;
         memcpy(saver->pix_data,  data->m_pixels,  data->m_pixels_size);
 
-        s_saverThread = CreateThread(NULL, 0, &png_saver_thread, (PVOID)saver, 0, &s_saverThreadId);
+        queue_insert(saver);
 
-        if(!s_saverThread)
-        {
-            errorMessageBox(hWnd, "Failed to make thread: %s.\n\nTrying without.", "Whoops");
+        if(!tryRunPngThread(hWnd))
             png_saver_thread(saver);
-        }
     }
 }
 
 void cmd_dumpClipboard(HWND hWnd, ShotData *data)
 {
     SaveData *saver = NULL;
-    SYSTEMTIME ltime;
     BITMAP bitmapInfo;
     BITMAPINFO bi;
     HBITMAP bBitClip;
@@ -180,8 +298,6 @@ void cmd_dumpClipboard(HWND hWnd, ShotData *data)
     HWND bBitClipOwner;
     LONG i;
     size_t pixSize;
-
-    closePngSaverThread();
 
     if(!IsClipboardFormatAvailable(CF_BITMAP))
         return;
@@ -231,16 +347,10 @@ void cmd_dumpClipboard(HWND hWnd, ShotData *data)
             if(saver)
             {
                 ZeroMemory(saver, sizeof(SaveData));
-
-                GetLocalTime(&ltime);
-
                 saver->w = bitmapInfo.bmWidth;
                 saver->h = bitmapInfo.bmHeight;
                 saver->pitch = bitmapInfo.bmWidth * 4;
-                snprintf(saver->save_path, MAX_PATH, "%s\\Scr_%04u-%02u-%02u_%02u-%02u-%02u.png",
-                         g_settings.savePath,
-                         ltime.wYear, ltime.wMonth, ltime.wDay,
-                         ltime.wHour, ltime.wMinute, ltime.wSecond);
+                generatePngFileName(saver->save_path, MAX_PATH);
                 saver->pix_data = img_src;
                 saver->pix_len = pixSize;
 
@@ -254,13 +364,10 @@ void cmd_dumpClipboard(HWND hWnd, ShotData *data)
                     pix8 += 4;
                 }
 
-                s_saverThread = CreateThread(NULL, 0, &png_saver_thread, (PVOID)saver, 0, &s_saverThreadId);
+                queue_insert(saver);
 
-                if(!s_saverThread)
-                {
-                    errorMessageBox(hWnd, "Failed to make thread: %s.\n\nTrying without.", "Whoops");
+                if(!tryRunPngThread(hWnd))
                     png_saver_thread(saver);
-                }
             }
         }
 

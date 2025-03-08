@@ -60,6 +60,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
     InitCommonControls();
 
+    shotProc_init();
     settingsInit(hInstance);
     ShotData_init(&g_shotData);
 
@@ -75,6 +76,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
     settingsDestroy();
     closeSysTrayIcon();
+    shotProc_quit();
 
     ShotData_free(&g_shotData);
 

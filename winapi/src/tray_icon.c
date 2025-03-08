@@ -132,7 +132,7 @@ static BOOL OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
             SendMessage(hWnd, WM_CLOSE, (WPARAM)0, (LPARAM)0);
         settingsDestroy();
         closeSysTrayIcon();
-        closePngSaverThread();
+        shotProc_quit();
         break;
 
     case ID_CMD_MAKE_SHOT:

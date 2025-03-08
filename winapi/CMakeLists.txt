@@ -30,5 +30,5 @@ if(NOT MSVC)
 endif()
 
 target_include_directories(TinyScreenshoterWin PRIVATE src res ../lib)
-target_link_libraries(TinyScreenshoterWin PRIVATE comctl32 gdi32 user32)
+target_link_libraries(TinyScreenshoterWin PRIVATE shlwapi comctl32 gdi32 user32)
 target_link_options(TinyScreenshoterWin PRIVATE -static -static-libgcc)
