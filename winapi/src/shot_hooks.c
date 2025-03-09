@@ -50,7 +50,7 @@ BOOL isForegroundFullscreen()
            a.right  == b.right &&
            a.bottom == b.bottom);
 
-    if(ret && s_hookBlocked)
+    if(!ret && s_hookBlocked)
         s_hookBlocked = FALSE;
 
     return ret;
