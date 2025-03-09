@@ -178,23 +178,27 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         {
         case IDHOT_SNAPDESKTOP:
             debugLog("Got a SYSTEM SHOT hot key!\n");
-            if(!isForegroundFullscreen())
-                cmd_makeScreenshot(hWnd, &g_shotData);
+            if(isForegroundFullscreen())
+                setHookBlocked(TRUE);
+            cmd_makeScreenshot(hWnd, &g_shotData);
             break;
         case ID_HOTKEY_SHOT:
             debugLog("Got a CUSTOM SHOT hot key!\n");
-            if(!isForegroundFullscreen())
-                cmd_makeScreenshot(hWnd, &g_shotData);
+            if(isForegroundFullscreen())
+                setHookBlocked(TRUE);
+            cmd_makeScreenshot(hWnd, &g_shotData);
             break;
         case IDHOT_SNAPWINDOW:
             debugLog("Got a SYSTEM WINDOW SHOT hot key!\n");
-            if(!isForegroundFullscreen())
-                cmd_makeScreenshot(hWnd, &g_shotData);
+            if(isForegroundFullscreen())
+                setHookBlocked(TRUE);
+            cmd_makeScreenshot(hWnd, &g_shotData);
             break;
         case ID_HOTKEY_ALT_SHOT:
             debugLog("Got a CUSTOM WINDOW SHOT hot key!\n");
-            if(!isForegroundFullscreen())
-                cmd_makeWindowShot(hWnd);
+            if(isForegroundFullscreen())
+                setHookBlocked(TRUE);
+            cmd_makeWindowShot(hWnd);
             break;
         }
         break;

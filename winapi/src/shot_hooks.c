@@ -35,6 +35,7 @@
 
 static HHOOK    s_msgHook = NULL;
 static BOOL     s_prScrPressed = FALSE;
+static BOOL     s_hookBlocked = FALSE;
 
 BOOL isForegroundFullscreen()
 {
@@ -49,9 +50,14 @@ BOOL isForegroundFullscreen()
             a.bottom == b.bottom);
 }
 
+void setHookBlocked(BOOL e)
+{
+    s_hookBlocked = e;
+}
+
 LRESULT CALLBACK ntWindowHookLL(int code, WPARAM wParam, LPARAM lParam)
 {
-    BOOL needHook = isForegroundFullscreen();
+    BOOL needHook = isForegroundFullscreen() && !s_hookBlocked;
     if(needHook && wParam == WM_KEYUP)
     {
         KBDLLHOOKSTRUCT*s = (KBDLLHOOKSTRUCT*)lParam;
@@ -64,7 +70,7 @@ LRESULT CALLBACK ntWindowHookLL(int code, WPARAM wParam, LPARAM lParam)
 
 void CALLBACK win9xWindowHook(HWND p1, UINT p2, UINT_PTR p3, DWORD p4)
 {
-    BOOL needHook = isForegroundFullscreen();
+    BOOL needHook = isForegroundFullscreen() && !s_hookBlocked;
     BOOL a = (GetAsyncKeyState(VK_MENU) & 0x01) == 1;
     BOOL k = (GetAsyncKeyState(VK_SNAPSHOT) & 0x01) == 1;
 

@@ -32,6 +32,7 @@
  * @return If foreground window possibly fullscreen
  */
 BOOL isForegroundFullscreen();
+void setHookBlocked(BOOL e);
 
 void initKeyHook(HWND hWnd, HINSTANCE hInstance);
 void closeKeyHooks(HWND hWnd);
