@@ -41,13 +41,19 @@ BOOL isForegroundFullscreen()
 {
     HWND window = GetForegroundWindow();
     RECT a, b;
+    BOOL ret;
     GetWindowRect(window, &a);
     GetWindowRect(GetDesktopWindow(), &b);
 
-    return (a.left   == b.left  &&
-            a.top    == b.top   &&
-            a.right  == b.right &&
-            a.bottom == b.bottom);
+    ret = (a.left   == b.left  &&
+           a.top    == b.top   &&
+           a.right  == b.right &&
+           a.bottom == b.bottom);
+
+    if(ret && s_hookBlocked)
+        s_hookBlocked = FALSE;
+
+    return ret;
 }
 
 void setHookBlocked(BOOL e)
