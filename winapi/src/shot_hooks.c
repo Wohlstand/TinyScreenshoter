@@ -36,11 +36,7 @@
 static HHOOK    s_msgHook = NULL;
 static BOOL     s_prScrPressed = FALSE;
 
-/**
- * @brief Detects the full-screen video game that is unable to process Windows global hotkeys, so, workarounds needed
- * @return If foreground window possibly fullscreen
- */
-static BOOL isForegroundFullscreen()
+BOOL isForegroundFullscreen()
 {
     HWND window = GetForegroundWindow();
     RECT a, b;

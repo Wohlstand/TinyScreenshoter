@@ -27,6 +27,12 @@
 
 #include <windef.h>
 
+/**
+ * @brief Detects the full-screen video game that is unable to process Windows global hotkeys, so, workarounds needed
+ * @return If foreground window possibly fullscreen
+ */
+BOOL isForegroundFullscreen();
+
 void initKeyHook(HWND hWnd, HINSTANCE hInstance);
 void closeKeyHooks(HWND hWnd);
 

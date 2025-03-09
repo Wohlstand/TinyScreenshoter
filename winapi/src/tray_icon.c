@@ -28,6 +28,7 @@
 #include "misc.h"
 #include "tray_icon.h"
 #include "shot_data.h"
+#include "shot_hooks.h"
 #include "shot_proc.h"
 #include "settings.h"
 #include "resource.h"
@@ -177,19 +178,23 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         {
         case IDHOT_SNAPDESKTOP:
             debugLog("Got a SYSTEM SHOT hot key!\n");
-            cmd_makeScreenshot(hWnd, &g_shotData);
+            if(!isForegroundFullscreen())
+                cmd_makeScreenshot(hWnd, &g_shotData);
             break;
         case ID_HOTKEY_SHOT:
             debugLog("Got a CUSTOM SHOT hot key!\n");
-            cmd_makeScreenshot(hWnd, &g_shotData);
+            if(!isForegroundFullscreen())
+                cmd_makeScreenshot(hWnd, &g_shotData);
             break;
         case IDHOT_SNAPWINDOW:
             debugLog("Got a SYSTEM WINDOW SHOT hot key!\n");
-            cmd_makeScreenshot(hWnd, &g_shotData);
+            if(!isForegroundFullscreen())
+                cmd_makeScreenshot(hWnd, &g_shotData);
             break;
         case ID_HOTKEY_ALT_SHOT:
             debugLog("Got a CUSTOM WINDOW SHOT hot key!\n");
-            cmd_makeWindowShot(hWnd);
+            if(!isForegroundFullscreen())
+                cmd_makeWindowShot(hWnd);
             break;
         }
         break;
