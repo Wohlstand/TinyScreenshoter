@@ -35,6 +35,7 @@ void shotProc_quit();
 void closePngSaverThread();
 
 void cmd_makeScreenshot(HWND hWnd, ShotData *data);
+void cmd_makeWindowShot(HWND hWnd);
 void cmd_dumpClipboard(HWND hWnd, ShotData *data);
 
 #endif /* SHOT_PROC_H */

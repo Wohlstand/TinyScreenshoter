@@ -150,7 +150,7 @@ static BOOL OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    switch (message)
+    switch(message)
     {
     case WM_DESTROY:
         PostQuitMessage(0);
@@ -171,6 +171,28 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 
     case WM_COMMAND:
         return OnCommand(hWnd, wParam, lParam);
+
+    case WM_HOTKEY:
+        switch((int)wParam)
+        {
+        case IDHOT_SNAPDESKTOP:
+            debugLog("Got a SYSTEM SHOT hot key!\n");
+            cmd_makeScreenshot(hWnd, &g_shotData);
+            break;
+        case ID_HOTKEY_SHOT:
+            debugLog("Got a CUSTOM SHOT hot key!\n");
+            cmd_makeScreenshot(hWnd, &g_shotData);
+            break;
+        case IDHOT_SNAPWINDOW:
+            debugLog("Got a SYSTEM WINDOW SHOT hot key!\n");
+            cmd_makeScreenshot(hWnd, &g_shotData);
+            break;
+        case ID_HOTKEY_ALT_SHOT:
+            debugLog("Got a CUSTOM WINDOW SHOT hot key!\n");
+            cmd_makeWindowShot(hWnd);
+            break;
+        }
+        break;
 
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);

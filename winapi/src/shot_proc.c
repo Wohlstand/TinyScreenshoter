@@ -312,6 +312,111 @@ void cmd_makeScreenshot(HWND hWnd, ShotData *data)
     }
 }
 
+void cmd_makeWindowShot(HWND hWnd)
+{
+    RECT aRect;
+    HWND srcWnd;
+    HDC srcDC;
+    LONG i, w, h;
+    HBITMAP dstBitmap;
+    HDC dstDC;
+    HGDIOBJ nullBitmap;
+    BITMAPINFO bi;
+    SaveData *saver = NULL;
+    uint8_t *pixels, *pix8, tmp;
+    size_t pixelsSize;
+
+    sysTraySetIcon(SET_ICON_BUSY);
+
+    srcWnd = GetForegroundWindow();
+
+    GetWindowRect(srcWnd, &aRect);
+    w = aRect.right - aRect.left;
+    h = aRect.bottom - aRect.top;
+
+    srcDC = GetWindowDC(srcWnd);
+
+    dstDC = CreateCompatibleDC(srcDC);
+    dstBitmap = CreateCompatibleBitmap(srcDC, w, h);
+    nullBitmap = SelectObject(dstDC, dstBitmap);
+
+    BitBlt(dstDC, 0, 0, w, h, srcDC, 0, 0, SRCCOPY);
+
+    pixelsSize = w * h * 4;
+    pixels = (uint8_t *)malloc(pixelsSize);
+    if(!pixels)
+    {
+        ReleaseDC(srcWnd, srcDC);
+        SelectObject(dstDC, nullBitmap);
+        DeleteDC(dstDC);
+        DeleteObject(dstBitmap);
+        sysTraySetIcon(SET_ICON_NORMAL);
+        errorMessageBox(hWnd, "Out of memory: %s", "Whoops");
+        return;
+    }
+
+    memset(&bi, 0, sizeof(BITMAPINFO));
+    bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bi.bmiHeader.biWidth = w;
+    bi.bmiHeader.biHeight = -h;
+    bi.bmiHeader.biPlanes = 1;
+    bi.bmiHeader.biBitCount = 32;
+    bi.bmiHeader.biCompression = BI_RGB;
+    bi.bmiHeader.biSizeImage = pixelsSize;
+
+    if(GetDIBits(srcDC, dstBitmap, 0, h, pixels, &bi, DIB_RGB_COLORS) == 0)
+    {
+        free(pixels);
+        ReleaseDC(srcWnd, srcDC);
+        SelectObject(dstDC, nullBitmap);
+        DeleteDC(dstDC);
+        DeleteObject(dstBitmap);
+        sysTraySetIcon(SET_ICON_NORMAL);
+        errorMessageBox(hWnd, "Failed to take the Window shot using GetDIBits: %s", "Whoops");
+        return;
+    }
+
+    pix8 = pixels;
+
+    for(i = 0; i < w * h; ++i)
+    {
+        tmp = pix8[0];
+        pix8[0] = pix8[2];
+        pix8[2] = tmp;
+        pix8[3] = 0xFF;
+        pix8 += 4;
+    }
+
+    MessageBeep(MB_OK);
+
+    ReleaseDC(srcWnd, srcDC);
+    SelectObject(dstDC, nullBitmap);
+    DeleteDC(dstDC);
+    DeleteObject(dstBitmap);
+
+    saver = (SaveData*)malloc(sizeof(SaveData));
+    if(saver)
+    {
+        ZeroMemory(saver, sizeof(SaveData));
+        saver->w = w;
+        saver->h = h;
+        saver->pitch = w * 4;
+        generatePngFileName(saver->save_path, MAX_PATH);
+        saver->pix_data = pixels;
+        saver->pix_len = pixelsSize;
+        queue_insert(saver);
+
+        if(!tryRunPngThread(hWnd))
+        {
+            sysTraySetIcon(SET_ICON_BUSY);
+            png_saver_thread(NULL);
+            sysTraySetIcon(SET_ICON_NORMAL);
+        }
+        else
+            initIconBlinker(hWnd);
+    }
+}
+
 void cmd_dumpClipboard(HWND hWnd, ShotData *data)
 {
     SaveData *saver = NULL;
@@ -406,3 +511,4 @@ void cmd_dumpClipboard(HWND hWnd, ShotData *data)
         CloseClipboard();
     }
 }
+

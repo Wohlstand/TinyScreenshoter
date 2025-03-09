@@ -36,10 +36,27 @@
 static HHOOK    s_msgHook = NULL;
 static BOOL     s_prScrPressed = FALSE;
 
+/**
+ * @brief Detects the full-screen video game that is unable to process Windows global hotkeys, so, workarounds needed
+ * @return If foreground window possibly fullscreen
+ */
+static BOOL isForegroundFullscreen()
+{
+    HWND window = GetForegroundWindow();
+    RECT a, b;
+    GetWindowRect(window, &a);
+    GetWindowRect(GetDesktopWindow(), &b);
+
+    return (a.left   == b.left  &&
+            a.top    == b.top   &&
+            a.right  == b.right &&
+            a.bottom == b.bottom);
+}
 
 LRESULT CALLBACK ntWindowHookLL(int code, WPARAM wParam, LPARAM lParam)
 {
-    if(wParam == WM_KEYUP)
+    BOOL needHook = isForegroundFullscreen();
+    if(needHook && wParam == WM_KEYUP)
     {
         KBDLLHOOKSTRUCT*s = (KBDLLHOOKSTRUCT*)lParam;
         if(s->vkCode == VK_SNAPSHOT)
@@ -51,6 +68,7 @@ LRESULT CALLBACK ntWindowHookLL(int code, WPARAM wParam, LPARAM lParam)
 
 void CALLBACK win9xWindowHook(HWND p1, UINT p2, UINT_PTR p3, DWORD p4)
 {
+    BOOL needHook = isForegroundFullscreen();
     BOOL a = (GetAsyncKeyState(VK_MENU) & 0x01) == 1;
     BOOL k = (GetAsyncKeyState(VK_SNAPSHOT) & 0x01) == 1;
 
@@ -67,7 +85,8 @@ void CALLBACK win9xWindowHook(HWND p1, UINT p2, UINT_PTR p3, DWORD p4)
     else if(s_prScrPressed && !k)
     {
         s_prScrPressed = FALSE;
-        SendMessageA(g_trayIconHWnd, WM_COMMAND, (WPARAM)ID_CMD_MAKE_SHOT, (LPARAM)0);
+        if(needHook)
+            SendMessageA(g_trayIconHWnd, WM_COMMAND, (WPARAM)ID_CMD_MAKE_SHOT, (LPARAM)0);
     }
 }
 
@@ -85,6 +104,9 @@ void initKeyHook(HWND hWnd, HINSTANCE hInstance)
 
     isDosBased = osvi.dwPlatformId != VER_PLATFORM_WIN32_NT;
 
+    RegisterHotKey(hWnd, ID_HOTKEY_ALT_SHOT, MOD_ALT, VK_SNAPSHOT);
+    RegisterHotKey(hWnd, ID_HOTKEY_SHOT, 0, VK_SNAPSHOT);
+
     if(isDosBased) /* Make a watch timer */
     {
         SetTimer(hWnd, ID_HOOK_TIMER, 50, &win9xWindowHook);
@@ -99,6 +121,8 @@ void initKeyHook(HWND hWnd, HINSTANCE hInstance)
 
 void closeKeyHooks(HWND hWnd)
 {
+    UnregisterHotKey(hWnd, ID_HOTKEY_SHOT);
+    UnregisterHotKey(hWnd, ID_HOTKEY_ALT_SHOT);
     KillTimer(hWnd, ID_HOOK_TIMER);
 }
 

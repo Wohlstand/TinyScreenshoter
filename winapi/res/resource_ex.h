@@ -4,3 +4,6 @@
 #define ID_HOOK_TIMER                           50000
 #define ID_ICON_STATUS_TIMER                    50001
 #define ID_CMD_MAKE_SHOT                        60000
+
+#define ID_HOTKEY_SHOT                          1000
+#define ID_HOTKEY_ALT_SHOT                      1001
