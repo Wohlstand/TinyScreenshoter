@@ -46,7 +46,7 @@ LRESULT CALLBACK ntWindowHookLL(int code, WPARAM wParam, LPARAM lParam)
             SendMessageA(g_trayIconHWnd, WM_COMMAND, (WPARAM)ID_CMD_MAKE_SHOT, (LPARAM)0);
     }
 
-    return CallNextHookEx(0, code, wParam, lParam);
+    return CallNextHookEx(s_msgHook, code, wParam, lParam);
 }
 
 void CALLBACK win9xWindowHook(HWND p1, UINT p2, UINT_PTR p3, DWORD p4)
