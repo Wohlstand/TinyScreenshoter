@@ -67,12 +67,13 @@ int detectShellVersion()
 {
     DLLVERSIONINFO dvi;
     HRESULT hr;
+    DLLGETVERSIONPROC pDllGetVersion;
     int shellVersion = 4;
 
     if(!lib_sh32)
         lib_sh32 = LoadLibraryA("shell32");
 
-    DLLGETVERSIONPROC pDllGetVersion = (DLLGETVERSIONPROC)GetProcAddress(lib_sh32, "DllGetVersion");
+    pDllGetVersion = (DLLGETVERSIONPROC)GetProcAddress(lib_sh32, "DllGetVersion");
 
     if(pDllGetVersion)
     {
@@ -113,7 +114,7 @@ static BOOL OnCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     BOOL ret = TRUE;
     /* int wNotifyCode = HIWORD(wParam);   // Notification code. */
-    int wID = LOWORD(wParam);   // Item, control, or accelerator identifier.
+    int wID = LOWORD(wParam);   /* Item, control, or accelerator identifier. */
     /* HWND hwndCtl    = (HWND)lParam;     // Handle of control. */
 
     (VOID)lParam;

@@ -27,7 +27,7 @@ add_executable(TinyScreenshoterWin WIN32
 target_compile_definitions(TinyScreenshoterWin PRIVATE -DSPNG_STATIC -DSPNG_SSE=0 -DSPNG_USE_MINIZ)
 
 if(NOT MSVC)
-    target_compile_options(TinyScreenshoterWin PRIVATE -Wall)
+    target_compile_options(TinyScreenshoterWin PRIVATE -Wall -pedantic)
 endif()
 
 target_include_directories(TinyScreenshoterWin PRIVATE src res ../lib)

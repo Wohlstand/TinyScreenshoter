@@ -34,4 +34,4 @@ void ftpSender_quit();
 
 void ftpSender_queueFile(HWND hWnd, const char *filePath);
 
-#endif // FTP_SENDER_H
+#endif /* FTP_SENDER_H */

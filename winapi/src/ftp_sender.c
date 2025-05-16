@@ -240,7 +240,7 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
     int try_count = 0, conn_error, res;
     uint16_t p_port = 0, reply;
     const size_t bufSizes = 1000;
-    char serverMessage[bufSizes], sendBuffer[bufSizes];
+    char serverMessage[1000], sendBuffer[1000];
     const char *send_file_name = NULL;
     FileSend *fileToSend = NULL;
     size_t    p_read = 0;
@@ -315,7 +315,7 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
         }
 
         debugLog("--FTP Login: %s\n", serverMessage);
-        // 331 Please specify the password.
+        /* 331 Please specify the password. */
         reply = ftpParseReplyCode(serverMessage, &res);
         if(reply != 331 || !res)
         {
@@ -336,7 +336,7 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
             }
 
             debugLog("--FTP Password: %s\n", serverMessage);
-            // 230 Login successful.
+            /* 230 Login successful. */
             reply = ftpParseReplyCode(serverMessage, &res);
             if(reply != 230 || !res)
             {
@@ -370,7 +370,7 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
     }
 
     debugLog("--FTP Change dir to %s: %s\n", g_settings.ftpSavePath, serverMessage);
-    // 250 Directory successfully changed.
+    /* 250 Directory successfully changed. */
     reply = ftpParseReplyCode(serverMessage, &res);
     if(reply != 250 || !res)
     {
@@ -390,7 +390,7 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
     }
 
     debugLog("--FTP Type I: %s\n", serverMessage);
-    // 200 Switching to Binary mode.
+    /* 200 Switching to Binary mode. */
     reply = ftpParseReplyCode(serverMessage, &res);
     if(reply != 200 || !res)
     {
@@ -410,7 +410,7 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
     }
 
     debugLog("--FTP PASV: %s\n", serverMessage);
-    // 227 Entering Passive Mode (172,16,9,141,39,22).
+    /* 227 Entering Passive Mode (172,16,9,141,39,22). */
     reply = ftpParseReplyCode(serverMessage, &res);
     if(reply != 227 || !res)
     {
@@ -515,7 +515,7 @@ static DWORD WINAPI ftp_sender_thread(LPVOID lpParameter)
         return 0;
     }
     debugLog("--FTP Quit: %s\n", serverMessage);
-    // 150 Ok to send data.
+    /* 150 Ok to send data. */
 
     ftpCleanUp(&ftp_sock, &p_sock);
 

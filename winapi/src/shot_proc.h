@@ -27,7 +27,10 @@
 
 #include <windef.h>
 
-typedef struct ShotData ShotData;
+#ifndef SHOTDATA_DEFINED
+#   define SHOTDATA_DEFINED
+typedef struct ShotData_t ShotData;
+#endif
 
 BOOL shotProc_isBusy();
 void shotProc_init();

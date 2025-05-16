@@ -34,4 +34,4 @@ char *shot_strtokr(char *s1, const char *s2, char **ptr);
 
 void debugLog(const char *fmt, ...);
 
-#endif // MISC_H
+#endif /* MISC_H */

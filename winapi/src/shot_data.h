@@ -29,7 +29,7 @@
 #include <stdint.h>
 #include <windef.h>
 
-struct ShotData
+struct ShotData_t
 {
     int     m_isInit;
     uint8_t *m_pixels;
@@ -46,7 +46,10 @@ struct ShotData
     HGDIOBJ m_screen_null_bitmap;
 };
 
-typedef struct ShotData ShotData;
+#ifndef SHOTDATA_DEFINED
+#   define SHOTDATA_DEFINED
+typedef struct ShotData_t ShotData;
+#endif
 
 extern ShotData g_shotData;
 
