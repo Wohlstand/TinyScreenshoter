@@ -19,4 +19,4 @@ A small Windows 9x compatible screenshot tool that runs in background and saves 
 
 ## There are two variants of program available
 - Qt version (Built with Qt 4.4.3, the last supported by Windows 9x), it also can be built with newer Qt 5 and can be built for Linux or macOS. It also supports the FTP upload of done screenshots (primarily to quickly send them to my main PC and share them somewhere also).
-- The experimental pure-WinAPI version that supposed to have the tiny filesize, take few amount of RAM, and start very quickly even on very old PCs like Pentium MMX 133 Mhz and older. It's planned to implement the same functionality that Qt version does including FTP uploads.
+- The pure-WinAPI version that replicates functionality of Qt version made with a goal to have the tiny filesize, take few amount of RAM, and start very quickly even on very old PCs like Pentium MMX 133 Mhz and older.
